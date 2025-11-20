@@ -44,6 +44,13 @@ app.innerHTML = `
 
     <!-- Drill Mode UI -->
     <div id="drill-container" class="mode-container">
+      <div class="controls-row">
+        <label for="clef-select">Clef:</label>
+        <select id="clef-select" class="module-select" style="margin-bottom: 0; padding: 0.4rem;">
+          <option value="treble">Treble</option>
+          <option value="bass">Bass</option>
+        </select>
+      </div>
       <div id="drill-notation" class="notation-box"></div>
 
       <div class="interaction-area">
@@ -99,6 +106,7 @@ const feedbackEl = document.getElementById('feedback-text')!;
 const scoreEl = document.getElementById('score-display')!;
 const questionEl = document.getElementById('question-text')!;
 const textInput = document.getElementById('text-input') as HTMLInputElement;
+const clefSelect = document.getElementById('clef-select') as HTMLSelectElement;
 
 // --- State Management ---
 
@@ -140,6 +148,14 @@ moduleSelect.addEventListener('change', (e) => {
   }
 
   renderLesson();
+});
+
+clefSelect.addEventListener('change', () => {
+  // Re-render current question with new clef
+  const chord = drillManager.getCurrentChord();
+  if (chord) {
+    renderDrillChord(chord);
+  }
 });
 
 // --- Lesson Mode Logic ---
@@ -193,9 +209,17 @@ function handleDrillInput(notes: NoteName[]) {
     if (isCorrect) {
       feedbackEl.textContent = 'Correct!';
       feedbackEl.style.color = '#4caf50'; // Green
-      audioManager.playCorrect();
+
+      // Play the actual chord instead of just a beep
+      const currentChord = drillManager.getCurrentChord();
+      if (currentChord) {
+        audioManager.playChord(currentChord.notes);
+      } else {
+        audioManager.playCorrect();
+      }
+
       scoreEl.textContent = `Score: ${drillManager.getScore()}`;
-      setTimeout(nextDrillQuestion, 1000);
+      setTimeout(nextDrillQuestion, 1500); // Slightly longer delay to hear the chord
     } else {
       feedbackEl.textContent = 'Try Again';
       feedbackEl.style.color = '#f44336'; // Red
@@ -210,8 +234,15 @@ function nextDrillQuestion() {
   feedbackEl.textContent = '';
   textInput.value = '';
 
-  const vexNotes = chord.notes.map((n) => `${n}/4`);
-  drillNotation.render(vexNotes);
+  renderDrillChord(chord);
+}
+
+function renderDrillChord(chord: any) {
+  const clef = clefSelect.value as 'treble' | 'bass';
+  const octave = clef === 'bass' ? 3 : 4;
+
+  const vexNotes = chord.notes.map((n: string) => `${n}/${octave}`);
+  drillNotation.render(vexNotes, clef);
 }
 
 document.getElementById('btn-next-drill')?.addEventListener('click', nextDrillQuestion);

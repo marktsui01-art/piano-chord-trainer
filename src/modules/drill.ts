@@ -29,6 +29,10 @@ export class DrillManager {
     return this.currentChord;
   }
 
+  public getCurrentChord(): Chord | null {
+    return this.currentChord;
+  }
+
   public checkAnswer(inputNotes: NoteName[]): boolean {
     if (!this.currentChord) return false;
 

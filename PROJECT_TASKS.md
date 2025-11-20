@@ -60,3 +60,8 @@ Based on `README.md` requirements.
     - [x] Add loading state handling
     - [x] Fallback mechanism
 
+## Phase 6: User Requests
+- [x] **Drill Mode Enhancements**
+    - [x] Play chord on correct answer (instead of beep)
+    - [x] Add Treble/Bass clef selector
+
