@@ -64,4 +64,9 @@ Based on `README.md` requirements.
 - [x] **Drill Mode Enhancements**
     - [x] Play chord on correct answer (instead of beep)
     - [x] Add Treble/Bass clef selector
+    - [x] Unit Tests for core modules
+    - [x] Global Clef Selector (Lesson & Drill)
+    - [x] Avoid duplicate questions
+    - [x] Correct octave playback for Bass Clef
+    - [x] Enter key to submit answer
 

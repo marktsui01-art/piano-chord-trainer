@@ -65,13 +65,13 @@ export class AudioManager {
     }
   }
 
-  public playChord(notes: NoteName[], duration: string = '2n') {
+  public playChord(notes: NoteName[], duration: string = '2n', octave: number = 4) {
     if (!this.isLoaded) {
       console.warn('⚠ Piano samples not loaded yet');
       return;
     }
-    // Default to octave 4 for chords
-    const fullNotes = notes.map((n) => n + '4');
+    // Use specified octave
+    const fullNotes = notes.map((n) => n + octave);
     this.sampler.triggerAttackRelease(fullNotes, duration);
   }
 

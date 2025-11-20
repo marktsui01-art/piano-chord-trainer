@@ -25,7 +25,13 @@ export class DrillManager {
       availableChords = C_MAJOR_SEVENTHS;
     }
 
-    this.currentChord = availableChords[Math.floor(Math.random() * availableChords.length)];
+    // Avoid repeating the same question if possible
+    let nextChord: Chord;
+    do {
+      nextChord = availableChords[Math.floor(Math.random() * availableChords.length)];
+    } while (availableChords.length > 1 && this.currentChord && nextChord === this.currentChord);
+
+    this.currentChord = nextChord;
     return this.currentChord;
   }
 

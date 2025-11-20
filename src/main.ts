@@ -24,6 +24,14 @@ app.innerHTML = `
         <option value="triads">C Major: Triads</option>
         <option value="sevenths">C Major: 7th Chords</option>
       </select>
+      
+      <div class="clef-selector-container" style="margin-left: 1rem; display: inline-block;">
+        <label for="clef-select" style="margin-right: 0.5rem;">Clef:</label>
+        <select id="clef-select" class="module-select" style="margin-bottom: 0; padding: 0.4rem;">
+          <option value="treble">Treble</option>
+          <option value="bass">Bass</option>
+        </select>
+      </div>
     </div>
 
     <!-- Lesson Mode UI -->
@@ -44,13 +52,6 @@ app.innerHTML = `
 
     <!-- Drill Mode UI -->
     <div id="drill-container" class="mode-container">
-      <div class="controls-row">
-        <label for="clef-select">Clef:</label>
-        <select id="clef-select" class="module-select" style="margin-bottom: 0; padding: 0.4rem;">
-          <option value="treble">Treble</option>
-          <option value="bass">Bass</option>
-        </select>
-      </div>
       <div id="drill-notation" class="notation-box"></div>
 
       <div class="interaction-area">
@@ -94,6 +95,7 @@ const drillNotation = new NotationRenderer('drill-notation');
 const navLesson = document.getElementById('nav-lesson')!;
 const navDrill = document.getElementById('nav-drill')!;
 const moduleSelect = document.getElementById('module-select') as HTMLSelectElement;
+const clefSelect = document.getElementById('clef-select') as HTMLSelectElement;
 const lessonContainer = document.getElementById('lesson-container')!;
 const drillContainer = document.getElementById('drill-container')!;
 
@@ -106,7 +108,6 @@ const feedbackEl = document.getElementById('feedback-text')!;
 const scoreEl = document.getElementById('score-display')!;
 const questionEl = document.getElementById('question-text')!;
 const textInput = document.getElementById('text-input') as HTMLInputElement;
-const clefSelect = document.getElementById('clef-select') as HTMLSelectElement;
 
 // --- State Management ---
 
@@ -127,6 +128,10 @@ function updateUI(state: AppState) {
     navDrill.classList.add('active');
     lessonContainer.classList.remove('active');
     drillContainer.classList.add('active');
+
+    // Re-render drill chord if switching to drill mode
+    const chord = drillManager.getCurrentChord();
+    if (chord) renderDrillChord(chord);
   }
 
   // Update Module Selector
@@ -151,12 +156,21 @@ moduleSelect.addEventListener('change', (e) => {
 });
 
 clefSelect.addEventListener('change', () => {
-  // Re-render current question with new clef
-  const chord = drillManager.getCurrentChord();
-  if (chord) {
-    renderDrillChord(chord);
+  // Re-render current view based on mode
+  if (stateManager.getState().mode === 'lesson') {
+    renderLesson();
+  } else {
+    const chord = drillManager.getCurrentChord();
+    if (chord) {
+      renderDrillChord(chord);
+    }
   }
 });
+
+// Helper to get current octave based on clef
+function getCurrentOctave(): number {
+  return clefSelect.value === 'bass' ? 3 : 4;
+}
 
 // --- Lesson Mode Logic ---
 
@@ -165,25 +179,27 @@ function renderLesson() {
   lessonNameEl.textContent = chord.name;
   lessonNotesEl.textContent = chord.notes.join(' - ');
 
-  const vexNotes = chord.notes.map((n) => `${n}/4`);
-  lessonNotation.render(vexNotes);
+  const clef = clefSelect.value as 'treble' | 'bass';
+  const octave = getCurrentOctave();
+  const vexNotes = chord.notes.map((n) => `${n}/${octave}`);
+  lessonNotation.render(vexNotes, clef);
 }
 
 document.getElementById('btn-prev-chord')?.addEventListener('click', () => {
   lessonManager.previous();
   renderLesson();
-  audioManager.playChord(lessonManager.getCurrentChord().notes);
+  audioManager.playChord(lessonManager.getCurrentChord().notes, '2n', getCurrentOctave());
 });
 
 document.getElementById('btn-next-chord')?.addEventListener('click', () => {
   lessonManager.next();
   renderLesson();
-  audioManager.playChord(lessonManager.getCurrentChord().notes);
+  audioManager.playChord(lessonManager.getCurrentChord().notes, '2n', getCurrentOctave());
 });
 
 document.getElementById('btn-play-lesson')?.addEventListener('click', async () => {
   await audioManager.start();
-  audioManager.playChord(lessonManager.getCurrentChord().notes);
+  audioManager.playChord(lessonManager.getCurrentChord().notes, '2n', getCurrentOctave());
 });
 
 // --- Drill Mode Logic ---
@@ -213,7 +229,7 @@ function handleDrillInput(notes: NoteName[]) {
       // Play the actual chord instead of just a beep
       const currentChord = drillManager.getCurrentChord();
       if (currentChord) {
-        audioManager.playChord(currentChord.notes);
+        audioManager.playChord(currentChord.notes, '2n', getCurrentOctave());
       } else {
         audioManager.playCorrect();
       }
@@ -239,7 +255,7 @@ function nextDrillQuestion() {
 
 function renderDrillChord(chord: any) {
   const clef = clefSelect.value as 'treble' | 'bass';
-  const octave = clef === 'bass' ? 3 : 4;
+  const octave = getCurrentOctave();
 
   const vexNotes = chord.notes.map((n: string) => `${n}/${octave}`);
   drillNotation.render(vexNotes, clef);
@@ -247,10 +263,19 @@ function renderDrillChord(chord: any) {
 
 document.getElementById('btn-next-drill')?.addEventListener('click', nextDrillQuestion);
 
-document.getElementById('btn-submit')?.addEventListener('click', () => {
+// Handle Text Input Submission
+const submitAnswer = () => {
   const text = textInput.value;
   const notes = inputManager.processTextInput(text);
   handleDrillInput(notes);
+};
+
+document.getElementById('btn-submit')?.addEventListener('click', submitAnswer);
+
+textInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    submitAnswer();
+  }
 });
 
 // Initial Render
