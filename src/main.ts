@@ -65,12 +65,16 @@ app.innerHTML = `
         <button id="btn-submit">Submit Answer</button>
       </div>
       
+      <div class="mic-controls">
+        <button id="btn-mic" class="btn-mic">🎤 Enable Mic</button>
+        <div id="input-monitor" class="input-monitor">Detected: <span id="detected-notes"></span></div>
+      </div>
+
       <button id="btn-next-drill" style="margin-top: 1rem;">Next Question</button>
     </div>
   </div>
 `;
 
-// Initialize Modules
 // Initialize Modules
 const stateManager = new StateManager();
 const lessonManager = new LessonManager();
@@ -108,6 +112,8 @@ const feedbackEl = document.getElementById('feedback-text')!;
 const scoreEl = document.getElementById('score-display')!;
 const questionEl = document.getElementById('question-text')!;
 const textInput = document.getElementById('text-input') as HTMLInputElement;
+const btnMic = document.getElementById('btn-mic')!;
+const detectedNotesEl = document.getElementById('detected-notes')!;
 
 // --- State Management ---
 
@@ -206,7 +212,9 @@ document.getElementById('btn-play-lesson')?.addEventListener('click', async () =
 
 // Initialize Input
 const inputManager = new InputManager((notes) => {
-  console.log('Input received:', notes);
+  // Update Input Monitor
+  detectedNotesEl.textContent = notes.join(' - ');
+
   handleDrillInput(notes);
 });
 
@@ -218,6 +226,17 @@ document.body.addEventListener(
   },
   { once: true }
 );
+
+// Mic Button
+btnMic.addEventListener('click', async () => {
+  try {
+    await inputManager.enableMicrophone();
+    btnMic.classList.add('active');
+    btnMic.textContent = "🎤 Mic On";
+  } catch (err) {
+    alert("Could not access microphone. Please check permissions.");
+  }
+});
 
 function handleDrillInput(notes: NoteName[]) {
   if (stateManager.getState().mode === 'drill') {
@@ -235,11 +254,20 @@ function handleDrillInput(notes: NoteName[]) {
       }
 
       scoreEl.textContent = `Score: ${drillManager.getScore()}`;
+
+      // Reset input (important for accumulated audio notes)
+      inputManager.resetInput();
+
       setTimeout(nextDrillQuestion, 1500); // Slightly longer delay to hear the chord
     } else {
-      feedbackEl.textContent = 'Try Again';
-      feedbackEl.style.color = '#f44336'; // Red
-      audioManager.playIncorrect();
+      // For partial matches or incorrect, we don't necessarily want to show "Try Again" immediately 
+      // if they are still building the chord (accumulating notes).
+      // But for now, let's keep it simple.
+      // Maybe only show "Try Again" if they submit via text? 
+      // Or just show nothing if it's incomplete.
+
+      // Let's only show "Try Again" if they have enough notes but they are wrong?
+      // Or just don't show negative feedback for partial inputs.
     }
   }
 }
@@ -249,6 +277,8 @@ function nextDrillQuestion() {
   questionEl.textContent = `Play: ${chord.name}`;
   feedbackEl.textContent = '';
   textInput.value = '';
+  inputManager.resetInput(); // Clear any leftover notes
+  detectedNotesEl.textContent = '';
 
   renderDrillChord(chord);
 }
@@ -268,6 +298,14 @@ const submitAnswer = () => {
   const text = textInput.value;
   const notes = inputManager.processTextInput(text);
   handleDrillInput(notes);
+
+  // If incorrect via text submit, show feedback
+  const isCorrect = drillManager.checkAnswer(notes);
+  if (!isCorrect) {
+    feedbackEl.textContent = 'Try Again';
+    feedbackEl.style.color = '#f44336';
+    audioManager.playIncorrect();
+  }
 };
 
 document.getElementById('btn-submit')?.addEventListener('click', submitAnswer);

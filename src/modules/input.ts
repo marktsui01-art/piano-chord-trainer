@@ -1,5 +1,6 @@
 import { WebMidi, Input } from 'webmidi';
 import { NoteName } from './content';
+import { AudioInputManager } from './audio-input';
 
 export type InputEventCallback = (notes: NoteName[]) => void;
 
@@ -8,10 +9,48 @@ export class InputManager {
   private activeNotes: Set<NoteName> = new Set();
   private onNotesChanged: InputEventCallback;
 
+  // Audio Input
+  private audioInput: AudioInputManager | null = null;
+  private isMicEnabled: boolean = false;
+
   constructor(onNotesChanged: InputEventCallback) {
     this.onNotesChanged = onNotesChanged;
     this.initMidi();
     this.initKeyboard();
+  }
+
+  public async enableMicrophone() {
+    if (this.isMicEnabled) return;
+
+    this.audioInput = new AudioInputManager((note) => {
+      this.handleAudioNote(note);
+    });
+
+    try {
+      await this.audioInput.start();
+      this.isMicEnabled = true;
+      console.log("✓ Microphone Input enabled");
+    } catch (err) {
+      console.error("Failed to enable microphone", err);
+      throw err;
+    }
+  }
+
+  private handleAudioNote(note: NoteName) {
+    // For audio input, we "accumulate" notes because it's monophonic.
+    // If the user plays C, then E, then G, we want to build the chord C-E-G.
+    // We don't remove the note when they stop playing it (unlike MIDI noteoff).
+    // The user will need to "Clear" or the game logic will reset on correct answer.
+
+    if (!this.activeNotes.has(note)) {
+      this.activeNotes.add(note);
+      this.emitNotes();
+    }
+  }
+
+  public resetInput() {
+    this.activeNotes.clear();
+    this.emitNotes();
   }
 
   private async initMidi() {
@@ -58,6 +97,12 @@ export class InputManager {
 
     this.midiInput.addListener('noteoff', (e) => {
       const noteName = (e.note.name + (e.note.accidental || '')) as NoteName;
+      // Only remove if we are NOT in "accumulation mode" (which we are effectively in if mic is on?)
+      // Actually, MIDI should behave normally (hold to play). 
+      // Audio input is the one that needs accumulation.
+      // But if we mix them, it might be weird. 
+      // Let's keep MIDI standard: lift key = remove note.
+      // Audio input notes will stick until reset.
       this.activeNotes.delete(noteName);
       this.emitNotes();
     });
