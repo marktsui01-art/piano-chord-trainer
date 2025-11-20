@@ -54,3 +54,9 @@ Based on `README.md` requirements.
     - [x] Styling (CSS)
     - [x] Error Handling (No MIDI device, Audio context start)
 
+## Phase 5: Audio Enhancements
+- [x] **Realistic Piano Sound**
+    - [x] Implement `Tone.Sampler` with Salamander piano samples
+    - [x] Add loading state handling
+    - [x] Fallback mechanism
+

@@ -12,6 +12,7 @@ const app = document.querySelector<HTMLDivElement>('#app')!;
 app.innerHTML = `
   <div class="container">
     <h1>Piano Chord Trainer</h1>
+    <div id="loading-indicator" class="loading-indicator">Loading Piano Sounds...</div>
     
     <div class="nav-bar">
       <button id="nav-lesson" class="nav-btn active">Lesson Mode</button>
@@ -62,10 +63,21 @@ app.innerHTML = `
 `;
 
 // Initialize Modules
+// Initialize Modules
 const stateManager = new StateManager();
 const lessonManager = new LessonManager();
 const drillManager = new DrillManager();
-const audioManager = new AudioManager();
+const audioManager = new AudioManager(() => {
+  const loader = document.getElementById('loading-indicator');
+  if (loader) {
+    loader.textContent = '✓ Sounds Ready';
+    loader.classList.add('loaded');
+    setTimeout(() => {
+      loader.style.opacity = '0';
+      setTimeout(() => loader.remove(), 500);
+    }, 2000);
+  }
+});
 
 // We need two notation renderers because they are in different divs and might need different sizes/contexts
 const lessonNotation = new NotationRenderer('lesson-notation');

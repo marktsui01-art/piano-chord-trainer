@@ -387,3 +387,24 @@ input[type='text']::placeholder {
     min-width: 100%;
   }
 }
+
+/* Loading Indicator */
+.loading-indicator {
+  background: rgba(99, 102, 241, 0.2);
+  color: var(--primary-light);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  margin: 0 auto 1rem;
+  display: inline-block;
+  border: 1px solid var(--border-color);
+  animation: pulse 1.5s infinite;
+  transition: all 0.5s ease;
+}
+
+.loading-indicator.loaded {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--secondary-color);
+  border-color: rgba(16, 185, 129, 0.3);
+  animation: none;
+}
