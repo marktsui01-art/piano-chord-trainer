@@ -7,17 +7,19 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "vitest"
+    "test": "vitest",
+    "format": "prettier --write \"src/**/*.{ts,css,html}\""
   },
   "devDependencies": {
+    "jsdom": "^23.0.0",
+    "prettier": "^3.6.2",
     "typescript": "^5.2.2",
     "vite": "^5.0.0",
-    "vitest": "^1.0.0",
-    "jsdom": "^23.0.0"
+    "vitest": "^1.0.0"
   },
   "dependencies": {
-    "vexflow": "^4.2.0",
     "tone": "^14.7.77",
+    "vexflow": "^4.2.0",
     "webmidi": "^3.1.0"
   }
 }

@@ -14,41 +14,42 @@ Based on `README.md` requirements.
     - [x] Web MIDI API integration
     - [x] Text Input Parser (Fallback)
     - [x] Input Normalization (Case, Accidentals)
-- [ ] **Audio Manager** (`src/modules/audio.ts`)
-    - [ ] Initialize Web Audio API / Tone.js
-    - [ ] Implement `playChord(notes)`
-    - [ ] Implement Sound Effects (Correct/Incorrect)
-- [ ] **Notation Renderer** (`src/modules/notation.ts`)
-    - [ ] Initialize VexFlow (or similar)
-    - [ ] Render single chord on staff
-    - [ ] Handle Treble and Bass clefs
+- [x] **Audio Manager** (`src/modules/audio.ts`)
+    - [x] Initialize Web Audio API / Tone.js
+    - [x] Implement `playChord(notes)`
+    - [x] Implement Sound Effects (Correct/Incorrect)
+- [x] **Notation Renderer** (`src/modules/notation.ts`)
+    - [x] Initialize VexFlow (or similar)
+    - [x] Render single chord on staff
+    - [x] Handle Treble and Bass clefs
 
 ## Phase 2: Game Logic (Drill Engine)
-- [ ] **Drill Manager** (`src/modules/drill.ts`)
-    - [ ] Question Generator (Randomize Chord, Inversion, Clef)
-    - [ ] Answer Validation Logic
-    - [ ] State Management (Current Question, Score)
-- [ ] **Scoring System**
-    - [ ] Track correct/incorrect attempts
-    - [ ] Reset score functionality
+- [x] **Drill Manager** (`src/modules/drill.ts`)
+    - [x] Question Generator (Randomize Chord, Inversion, Clef)
+    - [x] Answer Validation Logic
+    - [x] State Management (Current Question, Score)
+- [x] **Scoring System**
+    - [x] Track correct/incorrect attempts
+    - [x] Reset score functionality
 
 ## Phase 3: User Interface (SPA)
-- [ ] **Navigation**
-    - [ ] Mode Switcher (Lesson vs Drill)
-    - [ ] Module Selector (Triads vs 7ths)
-- [ ] **Lesson Mode UI**
-    - [ ] Flashcard Display (Name, Notes, Staff)
-    - [ ] "Play Audio" Button
-- [ ] **Drill Mode UI**
-    - [ ] Question Display (Staff/Instruction)
-    - [ ] Input Area (Text Box / MIDI Status)
-    - [ ] Feedback Display (Visual Correct/Incorrect)
-    - [ ] Scoreboard
+- [x] **Navigation**
+    - [x] Mode Switcher (Lesson vs Drill)
+    - [x] Module Selector (Triads vs 7ths)
+- [x] **Lesson Mode UI**
+    - [x] Flashcard Display (Name, Notes, Staff)
+    - [x] "Play Audio" Button
+- [x] **Drill Mode UI**
+    - [x] Question Display (Staff/Instruction)
+    - [x] Input Area (Text Box / MIDI Status)
+    - [x] Feedback Display (Visual Correct/Incorrect)
+    - [x] Scoreboard
 
 ## Phase 4: Content & Polish
 - [ ] **Content Verification**
     - [ ] Verify all C Major Triads render and play correctly
     - [ ] Verify all C Major 7th Chords render and play correctly
 - [ ] **Refinement**
+    - [x] Fix Drill Manager to respect selected Module (Triads/7ths)
     - [ ] Styling (CSS)
     - [ ] Error Handling (No MIDI device, Audio context start)

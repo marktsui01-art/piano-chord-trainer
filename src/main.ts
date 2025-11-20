@@ -1,4 +1,4 @@
-import './style.css'
+import './style.css';
 import { InputManager } from './modules/input';
 import { AudioManager } from './modules/audio';
 import { NotationRenderer } from './modules/notation';
@@ -112,7 +112,6 @@ function updateUI(state: AppState) {
   // Update Module Selector
   moduleSelect.value = state.module;
 }
-
 // --- Event Listeners ---
 
 navLesson.addEventListener('click', () => stateManager.setMode('lesson'));
@@ -122,8 +121,13 @@ moduleSelect.addEventListener('change', (e) => {
   const module = (e.target as HTMLSelectElement).value as ChordModule;
   stateManager.setModule(module);
   lessonManager.setModule(module);
-  // TODO: Update Drill Manager module as well when we implement that support
-  renderLesson(); // Re-render lesson if we are in lesson mode
+  drillManager.setModule(module);
+
+  if (stateManager.getState().mode === 'drill') {
+    nextDrillQuestion();
+  }
+
+  renderLesson();
 });
 
 // --- Lesson Mode Logic ---
@@ -133,7 +137,7 @@ function renderLesson() {
   lessonNameEl.textContent = chord.name;
   lessonNotesEl.textContent = chord.notes.join(' - ');
 
-  const vexNotes = chord.notes.map(n => `${n}/4`);
+  const vexNotes = chord.notes.map((n) => `${n}/4`);
   lessonNotation.render(vexNotes);
 }
 
@@ -163,22 +167,26 @@ const inputManager = new InputManager((notes) => {
 });
 
 // Start Audio Context on first interaction (global)
-document.body.addEventListener('click', async () => {
-  await audioManager.start();
-}, { once: true });
+document.body.addEventListener(
+  'click',
+  async () => {
+    await audioManager.start();
+  },
+  { once: true }
+);
 
 function handleDrillInput(notes: NoteName[]) {
   if (stateManager.getState().mode === 'drill') {
     const isCorrect = drillManager.checkAnswer(notes);
     if (isCorrect) {
-      feedbackEl.textContent = "Correct!";
-      feedbackEl.style.color = "#4caf50"; // Green
+      feedbackEl.textContent = 'Correct!';
+      feedbackEl.style.color = '#4caf50'; // Green
       audioManager.playCorrect();
       scoreEl.textContent = `Score: ${drillManager.getScore()}`;
       setTimeout(nextDrillQuestion, 1000);
     } else {
-      feedbackEl.textContent = "Try Again";
-      feedbackEl.style.color = "#f44336"; // Red
+      feedbackEl.textContent = 'Try Again';
+      feedbackEl.style.color = '#f44336'; // Red
       audioManager.playIncorrect();
     }
   }
@@ -187,10 +195,10 @@ function handleDrillInput(notes: NoteName[]) {
 function nextDrillQuestion() {
   const chord = drillManager.getQuestion();
   questionEl.textContent = `Play: ${chord.name}`;
-  feedbackEl.textContent = "";
-  textInput.value = "";
+  feedbackEl.textContent = '';
+  textInput.value = '';
 
-  const vexNotes = chord.notes.map(n => `${n}/4`);
+  const vexNotes = chord.notes.map((n) => `${n}/4`);
   drillNotation.render(vexNotes);
 }
 
