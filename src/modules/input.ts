@@ -19,21 +19,31 @@ export class InputManager {
       await WebMidi.enable();
       if (WebMidi.inputs.length > 0) {
         this.midiInput = WebMidi.inputs[0];
-        console.log(`MIDI Input connected: ${this.midiInput.name}`);
+        console.log(`✓ MIDI Input connected: ${this.midiInput.name}`);
         this.setupMidiListeners();
       } else {
-        console.log('No MIDI inputs found.');
+        console.log('ℹ No MIDI inputs found. Text input is available as fallback.');
       }
 
       WebMidi.addListener('connected', (e) => {
         if (e.port instanceof Input && !this.midiInput) {
           this.midiInput = e.port;
-          console.log(`MIDI Input connected: ${this.midiInput.name}`);
+          console.log(`✓ MIDI Input connected: ${this.midiInput.name}`);
           this.setupMidiListeners();
         }
       });
+
+      WebMidi.addListener('disconnected', (e) => {
+        if (e.port === this.midiInput) {
+          console.log('⚠ MIDI Input disconnected. Using text input fallback.');
+          this.midiInput = null;
+        }
+      });
     } catch (err) {
-      console.warn('WebMidi could not be enabled:', err);
+      console.warn(
+        '⚠ WebMidi could not be enabled. This is normal if no MIDI device is connected. Text input is available.',
+        err
+      );
     }
   }
 

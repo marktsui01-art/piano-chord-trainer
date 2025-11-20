@@ -11,8 +11,15 @@ export class AudioManager {
     this.synth.volume.value = -10; // Lower volume slightly
   }
 
-  public async start() {
-    await Tone.start();
+  public async start(): Promise<boolean> {
+    try {
+      await Tone.start();
+      console.log('✓ Audio context started successfully');
+      return true;
+    } catch (err) {
+      console.error('⚠ Failed to start audio context:', err);
+      return false;
+    }
   }
 
   public playChord(notes: NoteName[], duration: string = '1n') {
