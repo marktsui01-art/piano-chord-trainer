@@ -2,15 +2,15 @@ import Vex from 'vexflow';
 
 export class NotationRenderer {
     private divId: string;
-    private renderer: Vex.Flow.Renderer | null = null;
-    private context: Vex.IRenderContext | null = null;
+    private renderer: any = null;
+    private context: any = null;
 
     constructor(divId: string) {
         this.divId = divId;
     }
 
     public render(notes: string[], clef: 'treble' | 'bass' = 'treble') {
-        const div = document.getElementById(this.divId);
+        const div = document.getElementById(this.divId) as HTMLDivElement;
         if (!div) return;
 
         div.innerHTML = ''; // Clear previous
