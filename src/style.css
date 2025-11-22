@@ -265,3 +265,353 @@ input[type="text"] {
 .hidden {
   display: none !important;
 }
+
+/* --- Mobile & Responsive Optimizations --- */
+
+/* General Mobile Tweaks */
+@media (max-width: 600px) {
+  #app {
+    padding: 1rem;
+  }
+
+  h1 {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .notation-box {
+    min-height: 150px;
+    padding: 0.5rem;
+  }
+
+  /* Larger touch targets for buttons */
+  button {
+    padding: 0.8em 1.2em;
+    min-height: 44px;
+    /* Minimum touch target size */
+  }
+
+  .input-controls input[type="text"] {
+    min-height: 44px;
+  }
+}
+
+/* Landscape Mode Optimization (Phone held sideways) */
+@media (max-height: 500px) and (orientation: landscape) {
+  #app {
+    padding: 0.5rem;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    box-sizing: border-box;
+  }
+
+  h1 {
+    font-size: 1.2rem;
+    /* Much smaller title */
+    margin: 0 0 0.5rem 0;
+    display: inline-block;
+  }
+
+  /* Optional: Hide title completely in very tight spaces if needed */
+  /* h1 { display: none; } */
+
+  .nav-bar {
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .mode-container {
+    display: none !important;
+  }
+
+  .mode-container.active {
+    padding: 0.5rem;
+    flex: 1;
+    display: flex !important;
+    flex-direction: row;
+    /* Side-by-side layout */
+    gap: 1rem;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+    /* Allow scrolling within container if needed */
+  }
+
+  /* Adjust Lesson Mode Layout */
+  #lesson-container .lesson-card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 2rem;
+    width: 100%;
+    justify-content: space-around;
+  }
+
+  #lesson-container .notation-box {
+    margin: 0;
+    flex: 1;
+    max-width: 50%;
+  }
+
+  #lesson-container .lesson-info-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  /* Adjust Drill Mode Layout */
+  #drill-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+  }
+
+  #drill-notation {
+    flex: 1;
+    margin: 0;
+    max-width: 45%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .drill-right-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    /* Prevent panel itself from scrolling */
+  }
+
+  .drill-controls-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.2rem;
+    overflow-y: auto;
+    /* Only this part scrolls */
+    font-size: 0.8rem;
+  }
+
+  /* Hide redundant or space-consuming elements in landscape */
+  .drill-controls-side #question-text {
+    display: none;
+  }
+
+  .drill-controls-side #input-monitor {
+    display: none;
+  }
+
+  /* Make feedback and score side-by-side */
+  .drill-controls-side .interaction-area {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin: 0.2rem 0;
+  }
+
+  .drill-controls-side .feedback-text {
+    font-size: 0.9rem;
+    min-height: 1.2rem;
+    margin: 0;
+    text-align: left;
+  }
+
+  .drill-controls-side .score-display {
+    font-size: 0.8rem;
+    margin: 0;
+    text-align: right;
+  }
+
+  .drill-controls-side .input-controls,
+  .drill-controls-side .mic-controls {
+    margin-top: 0.1rem;
+    margin-bottom: 0.1rem;
+  }
+
+  .drill-controls-side button,
+  .drill-controls-side input[type="text"] {
+    padding: 0.3em 0.6em;
+    font-size: 0.8rem;
+    min-height: 32px;
+  }
+
+  /* Target the button inside the right panel */
+  .drill-right-panel #btn-next-drill {
+    margin-top: 0.5rem;
+    margin-bottom: 0.2rem;
+    background-color: var(--primary-color);
+    color: white;
+    flex-shrink: 0;
+    /* Don't let it shrink */
+  }
+
+  /* --- Mobile Menu Overlay (Landscape) --- */
+
+  /* Hide header content by default in landscape, but keep container for overlay logic */
+  #app-header {
+    display: none;
+  }
+
+  /* Show menu button - Ensure it's visible! */
+  #btn-mobile-menu {
+    display: flex !important;
+    /* Force display */
+    position: fixed;
+    top: 0.5rem;
+    left: 0.5rem;
+    z-index: 3000;
+    /* Very high z-index */
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    width: 40px;
+    height: 40px;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  /* Overlay State */
+  #app-header.show-menu {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-card);
+    z-index: 2100;
+    flex-direction: column;
+    justify-content: center;
+    padding: 2rem;
+    box-sizing: border-box;
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  #app-header.show-menu .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 2rem;
+  }
+
+  #app-header.show-menu h1 {
+    display: block;
+    font-size: 2rem;
+  }
+
+  #app-header.show-menu .close-menu {
+    display: block;
+    background: transparent;
+    font-size: 2rem;
+    color: white;
+    border: none;
+    padding: 0.5rem;
+  }
+
+  #app-header.show-menu #drill-settings {
+    display: block !important;
+    /* Force show settings in menu */
+  }
+
+  /* --- Focus Mode (Keyboard Active) --- */
+  body.keyboard-active #drill-notation {
+    /* Keep notation visible! */
+    flex: 0 0 auto;
+    max-width: 40%;
+  }
+
+  body.keyboard-active #app-header {
+    display: none !important;
+    /* Ensure header stays hidden */
+  }
+
+  body.keyboard-active #btn-mobile-menu,
+  body.keyboard-active #btn-fullscreen {
+    display: none !important;
+    /* Hide floating buttons */
+  }
+
+  body.keyboard-active .drill-right-panel {
+    justify-content: flex-start;
+    padding-top: 0.5rem;
+  }
+
+  /* Hide non-essentials in focus mode */
+  body.keyboard-active .score-display,
+  body.keyboard-active .mic-controls,
+  body.keyboard-active #btn-next-drill,
+  body.keyboard-active .feedback-text {
+    display: none !important;
+  }
+
+  body.keyboard-active .input-controls {
+    margin-top: 0;
+  }
+
+  /* Hide less important elements in landscape to save space */
+  .module-selector {
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  #drill-settings {
+    display: none !important;
+    /* Hide settings in landscape to save space */
+  }
+
+  .feedback-text {
+    font-size: 1.2rem;
+    min-height: 1.5rem;
+    margin: 0.2rem 0;
+  }
+}
+
+/* Fullscreen Toggle Button */
+#btn-fullscreen {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 1000;
+}
+
+/* Portrait / Desktop Styles for new elements */
+#btn-mobile-menu {
+  display: none;
+  /* Hidden by default */
+}
+
+.header-top {
+  display: block;
+}
+
+.close-menu {
+  display: none;
+}

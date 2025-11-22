@@ -11,41 +11,60 @@ const app = document.querySelector<HTMLDivElement>('#app')!;
 
 app.innerHTML = `
   <div class="container">
-    <h1>Piano Chord Trainer</h1>
-    <div id="loading-indicator" class="loading-indicator">Loading Piano Sounds...</div>
-    
-    <div class="nav-bar">
-      <button id="nav-lesson" class="nav-btn active">Lesson Mode</button>
-      <button id="nav-drill" class="nav-btn">Drill Mode</button>
-    </div>
+    <button id="btn-mobile-menu" class="btn-icon" title="Menu">☰</button>
 
-    <div class="module-selector">
-      <select id="module-select" class="module-select">
-        <option value="triads">C Major: Triads</option>
-        <option value="sevenths">C Major: 7th Chords</option>
-      </select>
+    <div id="app-header" class="app-header">
+      <div class="header-top">
+        <h1>Piano Chord Trainer</h1>
+        <button id="btn-close-menu" class="btn-icon close-menu" title="Close Menu">✕</button>
+      </div>
       
-      <div class="clef-selector-container" style="margin-left: 1rem; display: inline-block;">
-        <label for="clef-select" style="margin-right: 0.5rem;">Clef:</label>
-        <select id="clef-select" class="module-select" style="margin-bottom: 0; padding: 0.4rem;">
-          <option value="treble">Treble</option>
-          <option value="bass">Bass</option>
+      <div id="loading-indicator" class="loading-indicator">Loading Piano Sounds...</div>
+      
+      <div class="nav-bar">
+        <button id="nav-lesson" class="nav-btn active">Lesson Mode</button>
+        <button id="nav-drill" class="nav-btn">Drill Mode</button>
+      </div>
+
+      <div class="module-selector">
+        <select id="module-select" class="module-select">
+          <option value="triads">C Major: Triads</option>
+          <option value="sevenths">C Major: 7th Chords</option>
         </select>
+        
+        <div class="clef-selector-container" style="margin-left: 1rem; display: inline-block;">
+          <label for="clef-select" style="margin-right: 0.5rem;">Clef:</label>
+          <select id="clef-select" class="module-select" style="margin-bottom: 0; padding: 0.4rem;">
+            <option value="treble">Treble</option>
+            <option value="bass">Bass</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="drill-settings" class="drill-settings" style="display: none; margin-bottom: 1rem; text-align: center;">
+        <label style="margin-right: 1rem;">
+          <input type="checkbox" id="chk-inversions" /> Inversions
+        </label>
+        <label>
+          <input type="checkbox" id="chk-wide-range" /> Wide Range (Ledger Lines)
+        </label>
       </div>
     </div>
 
     <!-- Lesson Mode UI -->
     <div id="lesson-container" class="mode-container active">
       <div class="lesson-card">
-        <h2 id="lesson-chord-name">C Major</h2>
-        <div id="lesson-chord-notes" class="chord-notes">C - E - G</div>
-        
         <div id="lesson-notation" class="notation-box"></div>
         
-        <div class="lesson-controls">
-          <button id="btn-prev-chord" class="btn-nav">←</button>
-          <button id="btn-play-lesson" class="btn-play">▶ Play</button>
-          <button id="btn-next-chord" class="btn-nav">→</button>
+        <div class="lesson-info-side">
+          <h2 id="lesson-chord-name">C Major</h2>
+          <div id="lesson-chord-notes" class="chord-notes">C - E - G</div>
+          
+          <div class="lesson-controls">
+            <button id="btn-prev-chord" class="btn-nav">←</button>
+            <button id="btn-play-lesson" class="btn-play">▶ Play</button>
+            <button id="btn-next-chord" class="btn-nav">→</button>
+          </div>
         </div>
       </div>
     </div>
@@ -54,24 +73,30 @@ app.innerHTML = `
     <div id="drill-container" class="mode-container">
       <div id="drill-notation" class="notation-box"></div>
 
-      <div class="interaction-area">
-        <div id="question-text">Press Start to Begin</div>
-        <div id="feedback-text" class="feedback-text"></div>
-        <div id="score-display" class="score-display">Score: 0 / 0</div>
-      </div>
+      <div class="drill-right-panel">
+        <div class="drill-controls-side">
+          <div class="interaction-area">
+            <div id="question-text">Press Start to Begin</div>
+            <div id="feedback-text" class="feedback-text"></div>
+            <div id="score-display" class="score-display">Score: 0 / 0</div>
+          </div>
 
-      <div class="input-controls">
-        <input type="text" id="text-input" placeholder="Type notes (e.g. C E G)" />
-        <button id="btn-submit">Submit Answer</button>
-      </div>
-      
-      <div class="mic-controls">
-        <button id="btn-mic" class="btn-mic">🎤 Enable Mic</button>
-        <div id="input-monitor" class="input-monitor">Detected: <span id="detected-notes"></span></div>
-      </div>
+          <div class="input-controls">
+            <input type="text" id="text-input" placeholder="Type notes (e.g. C E G)" />
+            <button id="btn-submit">Submit Answer</button>
+          </div>
+          
+          <div class="mic-controls">
+            <button id="btn-mic" class="btn-mic">🎤 Enable Mic</button>
+            <div id="input-monitor" class="input-monitor">Detected: <span id="detected-notes"></span></div>
+          </div>
+        </div>
 
-      <button id="btn-next-drill" style="margin-top: 1rem;">Next Question</button>
+        <button id="btn-next-drill" style="margin-top: 1rem;">Next Question</button>
+      </div>
     </div>
+    
+    <button id="btn-fullscreen" title="Toggle Fullscreen">⛶</button>
   </div>
 `;
 
@@ -102,6 +127,9 @@ const moduleSelect = document.getElementById('module-select') as HTMLSelectEleme
 const clefSelect = document.getElementById('clef-select') as HTMLSelectElement;
 const lessonContainer = document.getElementById('lesson-container')!;
 const drillContainer = document.getElementById('drill-container')!;
+const drillSettings = document.getElementById('drill-settings')!;
+const chkInversions = document.getElementById('chk-inversions') as HTMLInputElement;
+const chkWideRange = document.getElementById('chk-wide-range') as HTMLInputElement;
 
 // Lesson UI
 const lessonNameEl = document.getElementById('lesson-chord-name')!;
@@ -128,16 +156,18 @@ function updateUI(state: AppState) {
     navDrill.classList.remove('active');
     lessonContainer.classList.add('active');
     drillContainer.classList.remove('active');
+    drillSettings.style.display = 'none';
     renderLesson();
   } else {
     navLesson.classList.remove('active');
     navDrill.classList.add('active');
     lessonContainer.classList.remove('active');
     drillContainer.classList.add('active');
+    drillSettings.style.display = 'block';
 
     // Re-render drill chord if switching to drill mode
     const chord = drillManager.getCurrentChord();
-    if (chord) renderDrillChord(chord);
+    if (chord) renderDrillChord();
   }
 
   // Update Module Selector
@@ -168,10 +198,22 @@ clefSelect.addEventListener('change', () => {
   } else {
     const chord = drillManager.getCurrentChord();
     if (chord) {
-      renderDrillChord(chord);
+      renderDrillChord();
     }
   }
 });
+
+// Settings Listeners
+function updateDrillSettings() {
+  drillManager.setOptions(chkInversions.checked, chkWideRange.checked);
+  // Only generate new question if we are currently in drill mode to avoid unnecessary updates
+  if (stateManager.getState().mode === 'drill') {
+    nextDrillQuestion();
+  }
+}
+
+chkInversions.addEventListener('change', updateDrillSettings);
+chkWideRange.addEventListener('change', updateDrillSettings);
 
 // Helper to get current octave based on clef
 function getCurrentOctave(): number {
@@ -248,7 +290,8 @@ function handleDrillInput(notes: NoteName[]) {
       // Play the actual chord instead of just a beep
       const currentChord = drillManager.getCurrentChord();
       if (currentChord) {
-        audioManager.playChord(currentChord.notes, '2n', getCurrentOctave());
+        const pitches = drillManager.getCurrentPitches(getCurrentOctave());
+        audioManager.playNotes(pitches, '2n');
       } else {
         audioManager.playCorrect();
       }
@@ -280,14 +323,15 @@ function nextDrillQuestion() {
   inputManager.resetInput(); // Clear any leftover notes
   detectedNotesEl.textContent = '';
 
-  renderDrillChord(chord);
+  renderDrillChord();
 }
 
-function renderDrillChord(chord: any) {
+function renderDrillChord() {
   const clef = clefSelect.value as 'treble' | 'bass';
   const octave = getCurrentOctave();
 
-  const vexNotes = chord.notes.map((n: string) => `${n}/${octave}`);
+  // Use the new voicing method from DrillManager which handles inversions and octave shifts
+  const vexNotes = drillManager.getCurrentVoicing(octave);
   drillNotation.render(vexNotes, clef);
 }
 
@@ -320,3 +364,81 @@ textInput.addEventListener('keydown', (e) => {
 renderLesson();
 // Initialize Drill with a question so it's not empty if they switch immediately
 nextDrillQuestion();
+
+// --- Mobile Enhancements ---
+
+// 1. Fullscreen Toggle
+const btnFullscreen = document.getElementById('btn-fullscreen');
+btnFullscreen?.addEventListener('click', () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(err => {
+      console.log(`Error attempting to enable fullscreen: ${err.message}`);
+    });
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  }
+});
+
+// 2. Mobile Menu Toggle
+const btnMobileMenu = document.getElementById('btn-mobile-menu');
+const btnCloseMenu = document.getElementById('btn-close-menu');
+const appHeader = document.getElementById('app-header');
+
+function toggleMenu() {
+  appHeader?.classList.toggle('show-menu');
+}
+
+btnMobileMenu?.addEventListener('click', toggleMenu);
+btnCloseMenu?.addEventListener('click', toggleMenu);
+
+// Close menu when a module is selected (optional UX improvement)
+moduleSelect.addEventListener('change', () => {
+  if (appHeader?.classList.contains('show-menu')) {
+    toggleMenu();
+  }
+});
+
+// 3. Keyboard Focus Mode
+textInput.addEventListener('focus', () => {
+  document.body.classList.add('keyboard-active');
+  // Optional: Scroll to top to ensure layout is stable
+  window.scrollTo(0, 0);
+});
+
+textInput.addEventListener('blur', () => {
+  document.body.classList.remove('keyboard-active');
+});
+
+// 4. Screen Wake Lock API
+let wakeLock: any = null;
+
+async function requestWakeLock() {
+  if ('wakeLock' in navigator) {
+    try {
+      wakeLock = await (navigator as any).wakeLock.request('screen');
+      console.log('Screen Wake Lock active');
+
+      wakeLock.addEventListener('release', () => {
+        console.log('Screen Wake Lock released');
+      });
+    } catch (err: any) {
+      console.error(`${err.name}, ${err.message}`);
+    }
+  }
+}
+
+// Re-request wake lock when visibility changes (e.g. switching tabs)
+document.addEventListener('visibilitychange', async () => {
+  if (wakeLock !== null && document.visibilityState === 'visible') {
+    await requestWakeLock();
+  }
+});
+
+// Request wake lock on first interaction (similar to audio context)
+document.body.addEventListener('click', async () => {
+  if (!wakeLock) {
+    await requestWakeLock();
+  }
+}, { once: true });
