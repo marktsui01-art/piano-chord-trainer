@@ -11,23 +11,25 @@ describe('DrillManager', () => {
 
     describe('getQuestion', () => {
         it('should return a chord from triads by default', () => {
-            const chord = drillManager.getQuestion();
-            expect(C_MAJOR_TRIADS).toContainEqual(chord);
+            const question = drillManager.getQuestion();
+            const chordNames = C_MAJOR_TRIADS.map(c => c.name);
+            expect(chordNames).toContain(question.name);
         });
 
         it('should return a chord from sevenths when module is set to sevenths', () => {
             drillManager.setModule('sevenths');
-            const chord = drillManager.getQuestion();
-            expect(C_MAJOR_SEVENTHS).toContainEqual(chord);
+            const question = drillManager.getQuestion();
+            const chordNames = C_MAJOR_SEVENTHS.map(c => c.name);
+            expect(chordNames).toContain(question.name);
         });
 
         it('should not return the same chord twice in a row', () => {
-            const firstChord = drillManager.getQuestion();
-            const secondChord = drillManager.getQuestion();
+            const firstQuestion = drillManager.getQuestion();
+            const secondQuestion = drillManager.getQuestion();
 
             // If there's only one chord, this test doesn't apply
             if (C_MAJOR_TRIADS.length > 1) {
-                expect(secondChord).not.toBe(firstChord);
+                expect(secondQuestion.name).not.toBe(firstQuestion.name);
             }
         });
     });
@@ -38,42 +40,46 @@ describe('DrillManager', () => {
         });
 
         it('should return the current chord after getQuestion is called', () => {
-            const chord = drillManager.getQuestion();
-            expect(drillManager.getCurrentChord()).toBe(chord);
+            drillManager.getQuestion();
+            const currentChord = drillManager.getCurrentChord();
+            expect(currentChord).not.toBeNull();
         });
     });
 
     describe('checkAnswer', () => {
-        it('should return true for correct answer', () => {
-            const chord = drillManager.getQuestion();
-            const isCorrect = drillManager.checkAnswer(chord.notes);
-            expect(isCorrect).toBe(true);
+        it('should return correct for correct answer', () => {
+            drillManager.getQuestion();
+            const currentChord = drillManager.getCurrentChord();
+            const result = drillManager.checkAnswer(currentChord!.notes);
+            expect(result).toBe('correct');
         });
 
-        it('should return false for incorrect answer', () => {
+        it('should return incorrect for incorrect answer', () => {
             drillManager.getQuestion();
-            const isCorrect = drillManager.checkAnswer(['C', 'D', 'E']);
-            expect(isCorrect).toBe(false);
+            const result = drillManager.checkAnswer(['C', 'D', 'E']);
+            expect(result).toBe('incorrect');
         });
 
-        it('should return false for partial answer', () => {
+        it('should return incorrect for partial answer', () => {
             drillManager.getQuestion();
-            const isCorrect = drillManager.checkAnswer(['C', 'E']);
-            expect(isCorrect).toBe(false);
+            const result = drillManager.checkAnswer(['C', 'E']);
+            expect(result).toBe('incorrect');
         });
 
         it('should accept notes in any order', () => {
-            const chord = drillManager.getQuestion();
-            const shuffled = [...chord.notes].reverse();
-            const isCorrect = drillManager.checkAnswer(shuffled);
-            expect(isCorrect).toBe(true);
+            drillManager.getQuestion();
+            const currentChord = drillManager.getCurrentChord();
+            const shuffled = [...currentChord!.notes].reverse();
+            const result = drillManager.checkAnswer(shuffled);
+            expect(result).toBe('correct');
         });
     });
 
     describe('scoring', () => {
         it('should track correct answers', () => {
-            const chord = drillManager.getQuestion();
-            drillManager.checkAnswer(chord.notes);
+            drillManager.getQuestion();
+            const currentChord = drillManager.getCurrentChord();
+            drillManager.checkAnswer(currentChord!.notes);
             expect(drillManager.getScore()).toBe('1 / 1');
         });
 
@@ -84,8 +90,9 @@ describe('DrillManager', () => {
         });
 
         it('should reset score', () => {
-            const chord = drillManager.getQuestion();
-            drillManager.checkAnswer(chord.notes);
+            drillManager.getQuestion();
+            const currentChord = drillManager.getCurrentChord();
+            drillManager.checkAnswer(currentChord!.notes);
             drillManager.resetScore();
             expect(drillManager.getScore()).toBe('0 / 0');
         });

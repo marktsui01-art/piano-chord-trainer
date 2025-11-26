@@ -1,5 +1,5 @@
 export type AppMode = 'lesson' | 'drill';
-export type ChordModule = 'triads' | 'sevenths';
+export type ChordModule = 'triads' | 'sevenths' | 'speed' | 'interval' | 'melody';
 
 export interface AppState {
   mode: AppMode;

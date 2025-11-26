@@ -30,7 +30,7 @@ describe('Voicing Verification', () => {
         drillManager.setModule('triads');
         for (let i = 0; i < 50; i++) {
             drillManager.getQuestion();
-            const voicing = drillManager.getCurrentVoicing(4); // Base octave 4
+            const voicing = drillManager.getVexFlowNotes(4); // Base octave 4
 
             if (voicing.length === 0) continue;
 
@@ -40,7 +40,7 @@ describe('Voicing Verification', () => {
             const spread = max - min;
 
             if (spread > 12) {
-                console.log(`FAIL Triad: ${drillManager.getCurrentChord()?.name}, Inv: ${drillManager['currentInversion']}, Spread: ${spread}`);
+                console.log(`FAIL Triad: ${drillManager.getCurrentChord()?.name}, Spread: ${spread}`);
                 console.log('Voicing:', voicing);
             }
 
@@ -51,7 +51,7 @@ describe('Voicing Verification', () => {
         drillManager.setModule('sevenths');
         for (let i = 0; i < 50; i++) {
             drillManager.getQuestion();
-            const voicing = drillManager.getCurrentVoicing(4);
+            const voicing = drillManager.getVexFlowNotes(4);
 
             if (voicing.length === 0) continue;
 
@@ -61,7 +61,7 @@ describe('Voicing Verification', () => {
             const spread = max - min;
 
             if (spread > 12) {
-                console.log(`FAIL 7th: ${drillManager.getCurrentChord()?.name}, Inv: ${drillManager['currentInversion']}, Spread: ${spread}`);
+                console.log(`FAIL 7th: ${drillManager.getCurrentChord()?.name}, Spread: ${spread}`);
                 console.log('Voicing:', voicing);
             }
 
@@ -76,7 +76,7 @@ describe('Voicing Verification', () => {
 
         for (let i = 0; i < 50; i++) {
             drillManager.getQuestion();
-            const voicing = drillManager.getCurrentVoicing(4);
+            const voicing = drillManager.getVexFlowNotes(4);
             const pitches = voicing.map(getMidiPitch);
             const spread = Math.max(...pitches) - Math.min(...pitches);
 

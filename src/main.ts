@@ -3,6 +3,7 @@ import { InputManager } from './modules/input';
 import { AudioManager } from './modules/audio';
 import { NotationRenderer } from './modules/notation';
 import { DrillManager } from './modules/drill';
+import { DrillResult } from './modules/drills/DrillStrategy';
 import { NoteName } from './modules/content';
 import { StateManager, AppState, ChordModule } from './modules/state';
 import { LessonManager } from './modules/lesson';
@@ -30,6 +31,9 @@ app.innerHTML = `
         <select id="module-select" class="module-select">
           <option value="triads">C Major: Triads</option>
           <option value="sevenths">C Major: 7th Chords</option>
+          <option value="speed">Speed Note Drill</option>
+          <option value="interval">Interval Recognition</option>
+          <option value="melody">Melodic Sight-Reading</option>
         </select>
         
         <div class="clef-selector-container" style="margin-left: 1rem; display: inline-block;">
@@ -280,19 +284,35 @@ btnMic.addEventListener('click', async () => {
   }
 });
 
-function handleDrillInput(notes: NoteName[]) {
+function handleDrillInput(notes: NoteName[]): DrillResult | null {
   if (stateManager.getState().mode === 'drill') {
-    const isCorrect = drillManager.checkAnswer(notes);
-    if (isCorrect) {
+    console.log(`[Main] handleDrillInput called with notes: ${JSON.stringify(notes)}`);
+    const result = drillManager.checkAnswer(notes);
+    console.log(`[Main] checkAnswer result: ${result}`);
+
+    if (result === 'correct') {
       feedbackEl.textContent = 'Correct!';
       feedbackEl.style.color = '#4caf50'; // Green
 
-      // Play the actual chord instead of just a beep
-      const currentChord = drillManager.getCurrentChord();
-      if (currentChord) {
-        const pitches = drillManager.getCurrentPitches(getCurrentOctave());
-        audioManager.playNotes(pitches, '2n');
-      } else {
+      // Play the actual chord or melody
+      try {
+        if (drillManager.isSequential) {
+          const pitches = drillManager.getCurrentPitches(getCurrentOctave());
+          console.log(`[Main] Playing melody sequence: ${pitches}`);
+          audioManager.playNotes(pitches, '2n');
+        } else {
+          const currentChord = drillManager.getCurrentChord();
+          if (currentChord) {
+            const pitches = drillManager.getCurrentPitches(getCurrentOctave());
+            console.log(`[Main] Playing chord: ${pitches}`);
+            audioManager.playNotes(pitches, '2n');
+          } else {
+            audioManager.playCorrect();
+          }
+        }
+      } catch (e) {
+        console.error('[Main] Error playing audio feedback:', e);
+        // Fallback to simple beep if something goes wrong
         audioManager.playCorrect();
       }
 
@@ -302,17 +322,21 @@ function handleDrillInput(notes: NoteName[]) {
       inputManager.resetInput();
 
       setTimeout(nextDrillQuestion, 1500); // Slightly longer delay to hear the chord
-    } else {
-      // For partial matches or incorrect, we don't necessarily want to show "Try Again" immediately 
-      // if they are still building the chord (accumulating notes).
-      // But for now, let's keep it simple.
-      // Maybe only show "Try Again" if they submit via text? 
-      // Or just show nothing if it's incomplete.
+    } else if (result === 'incorrect') {
+      // ...
+    } else if (result === 'continue') {
+      // Re-render to show progress (e.g. cursor advancement)
+      renderDrillChord();
 
-      // Let's only show "Try Again" if they have enough notes but they are wrong?
-      // Or just don't show negative feedback for partial inputs.
+      // Play the note that was just hit correctly
+      const lastNote = drillManager.getLastCorrectNote();
+      if (lastNote) {
+        audioManager.playNotes([lastNote], '4n');
+      }
     }
+    return result;
   }
+  return null;
 }
 
 function nextDrillQuestion() {
@@ -331,8 +355,9 @@ function renderDrillChord() {
   const octave = getCurrentOctave();
 
   // Use the new voicing method from DrillManager which handles inversions and octave shifts
-  const vexNotes = drillManager.getCurrentVoicing(octave);
-  drillNotation.render(vexNotes, clef);
+  const vexNotes = drillManager.getVexFlowNotes(octave);
+  const currentIndex = drillManager.getCurrentIndex();
+  drillNotation.render(vexNotes, clef, drillManager.isSequential, currentIndex);
 }
 
 document.getElementById('btn-next-drill')?.addEventListener('click', nextDrillQuestion);
@@ -357,6 +382,24 @@ document.getElementById('btn-submit')?.addEventListener('click', submitAnswer);
 textInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
     submitAnswer();
+  }
+});
+
+textInput.addEventListener('input', () => {
+  if (drillManager.isSequential) {
+    const text = textInput.value;
+    const notes = inputManager.processTextInput(text);
+
+    if (notes.length > 0) {
+      // For sequential drills, we want to process immediately
+      const result = handleDrillInput(notes);
+
+      // If the note was accepted (correct or continue), clear the input
+      // so the user can type the next note without having to delete.
+      if (result === 'correct' || result === 'continue') {
+        textInput.value = '';
+      }
+    }
   }
 });
 
