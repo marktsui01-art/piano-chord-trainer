@@ -74,12 +74,12 @@ export class MelodyDrill implements DrillStrategy {
         this.total = 0;
     }
 
-    public getVexFlowNotes(baseOctave: number): string[] {
+    public getVexFlowNotes(_baseOctave: number): string[] {
         // Return all notes in the sequence
         return this.sequence.map(n => `${n.name}/${n.octave}`);
     }
 
-    public getPlaybackNotes(baseOctave: number): string[] {
+    public getPlaybackNotes(_baseOctave: number): string[] {
         // Play the whole melody as a preview
         return this.sequence.map(n => `${n.name}${n.octave}`);
     }

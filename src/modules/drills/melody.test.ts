@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MelodyDrill } from './MelodyDrill';
-import { NoteName } from '../content';
 
 describe('MelodyDrill', () => {
     let drill: MelodyDrill;

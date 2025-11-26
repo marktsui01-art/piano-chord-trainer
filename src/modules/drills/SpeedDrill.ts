@@ -11,11 +11,6 @@ export class SpeedDrill implements DrillStrategy {
     private currentNote: SpeedNote | null = null;
     private score: number = 0;
     private total: number = 0;
-    private startTime: number = 0;
-
-    constructor() {
-        this.startTime = Date.now();
-    }
 
     public getQuestion(): DrillQuestion {
         // Generate random note
@@ -48,16 +43,15 @@ export class SpeedDrill implements DrillStrategy {
     public resetScore() {
         this.score = 0;
         this.total = 0;
-        this.startTime = Date.now();
     }
 
-    public getVexFlowNotes(baseOctave: number): string[] {
+    public getVexFlowNotes(_baseOctave: number): string[] {
         if (!this.currentNote) return [];
         // Ignore baseOctave, use note's specific octave
         return [`${this.currentNote.name}/${this.currentNote.octave}`];
     }
 
-    public getPlaybackNotes(baseOctave: number): string[] {
+    public getPlaybackNotes(_baseOctave: number): string[] {
         if (!this.currentNote) return [];
         return [`${this.currentNote.name}${this.currentNote.octave}`];
     }

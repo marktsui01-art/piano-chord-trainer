@@ -1,5 +1,6 @@
 import './style.css';
 import { InputManager } from './modules/input';
+import { VirtualPiano } from './modules/virtual-piano';
 import { AudioManager } from './modules/audio';
 import { NotationRenderer } from './modules/notation';
 import { DrillManager } from './modules/drill';
@@ -89,6 +90,11 @@ app.innerHTML = `
             <input type="text" id="text-input" placeholder="Type notes (e.g. C E G)" />
             <button id="btn-submit">Submit Answer</button>
           </div>
+
+          <div class="virtual-piano-controls">
+             <button id="btn-toggle-piano" class="btn-secondary">🎹 Show Piano</button>
+          </div>
+          <div id="virtual-piano-container" style="display: none;"></div>
           
           <div class="mic-controls">
             <button id="btn-mic" class="btn-mic">🎤 Enable Mic</button>
@@ -264,6 +270,24 @@ const inputManager = new InputManager((notes) => {
   handleDrillInput(notes);
 });
 
+// Initialize Virtual Piano
+const virtualPiano = new VirtualPiano((note, active) => {
+  inputManager.toggleNote(note, active);
+});
+virtualPiano.render('virtual-piano-container');
+
+// Toggle Piano Visibility
+const btnTogglePiano = document.getElementById('btn-toggle-piano');
+const pianoContainer = document.getElementById('virtual-piano-container');
+
+btnTogglePiano?.addEventListener('click', () => {
+  if (pianoContainer) {
+    const isHidden = pianoContainer.style.display === 'none';
+    pianoContainer.style.display = isHidden ? 'flex' : 'none';
+    btnTogglePiano.textContent = isHidden ? '🎹 Hide Piano' : '🎹 Show Piano';
+  }
+});
+
 // Start Audio Context on first interaction (global)
 document.body.addEventListener(
   'click',
@@ -320,6 +344,7 @@ function handleDrillInput(notes: NoteName[]): DrillResult | null {
 
       // Reset input (important for accumulated audio notes)
       inputManager.resetInput();
+      virtualPiano.clear();
 
       setTimeout(nextDrillQuestion, 1500); // Slightly longer delay to hear the chord
     } else if (result === 'incorrect') {
@@ -345,6 +370,7 @@ function nextDrillQuestion() {
   feedbackEl.textContent = '';
   textInput.value = '';
   inputManager.resetInput(); // Clear any leftover notes
+  virtualPiano.clear();
   detectedNotesEl.textContent = '';
 
   renderDrillChord();

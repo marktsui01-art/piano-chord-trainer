@@ -166,6 +166,15 @@ export class InputManager {
     this.emitNotes();
   }
 
+  public toggleNote(note: NoteName, active: boolean) {
+    if (active) {
+      this.activeNotes.add(note);
+    } else {
+      this.activeNotes.delete(note);
+    }
+    this.emitNotes();
+  }
+
   private emitNotes() {
     this.onNotesChanged(Array.from(this.activeNotes));
   }

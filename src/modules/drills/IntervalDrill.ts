@@ -26,7 +26,6 @@ const CHROMATIC_SCALE: NoteName[] = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 
 export class IntervalDrill implements DrillStrategy {
     public readonly isSequential = false;
     private currentRoot: { name: NoteName, octave: number } | null = null;
-    private currentInterval: Interval | null = null;
     private targetNote: { name: NoteName, octave: number } | null = null;
 
     private score: number = 0;
@@ -48,7 +47,6 @@ export class IntervalDrill implements DrillStrategy {
         const targetName = CHROMATIC_SCALE[targetIndex];
 
         this.currentRoot = { name: rootName, octave: rootOctave };
-        this.currentInterval = interval;
         this.targetNote = { name: targetName, octave: targetOctave };
 
         return { name: `${interval.name} above ${rootName}` };
@@ -74,13 +72,13 @@ export class IntervalDrill implements DrillStrategy {
         this.total = 0;
     }
 
-    public getVexFlowNotes(baseOctave: number): string[] {
+    public getVexFlowNotes(_baseOctave: number): string[] {
         if (!this.currentRoot) return [];
         // Show Root note
         return [`${this.currentRoot.name}/${this.currentRoot.octave}`];
     }
 
-    public getPlaybackNotes(baseOctave: number): string[] {
+    public getPlaybackNotes(_baseOctave: number): string[] {
         if (!this.currentRoot || !this.targetNote) return [];
         // Play Root then Target? Or just Root?
         // Let's play Root so user hears it.
