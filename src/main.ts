@@ -6,6 +6,7 @@ import { NotationRenderer } from './modules/notation';
 import { DrillManager } from './modules/drill';
 import { DrillResult } from './modules/drills/DrillStrategy';
 import { NoteName } from './modules/content';
+import { KEYS, KeyMode } from './modules/keys';
 import { StateManager, AppState, ChordModule } from './modules/state';
 import { LessonManager } from './modules/lesson';
 import './pwa';
@@ -45,6 +46,22 @@ app.innerHTML = `
             <option value="bass">Bass</option>
           </select>
         </div>
+      </div>
+
+      <div id="key-settings" class="key-settings" style="display: none; margin-top: 1rem; text-align: center;">
+          <div style="display: inline-block; margin-right: 1rem;">
+             <label for="key-select">Key:</label>
+             <select id="key-select" class="module-select" style="width: auto;"></select>
+          </div>
+          <div id="mode-select-container" style="display: inline-block;">
+             <label for="mode-select">Mode:</label>
+             <select id="mode-select" class="module-select" style="width: auto;">
+                 <option value="Major">Major (Ionian)</option>
+                 <option value="Minor">Minor (Aeolian)</option>
+                 <option value="Dorian">Dorian</option>
+                 <option value="Mixolydian">Mixolydian</option>
+             </select>
+          </div>
       </div>
 
       <div id="drill-settings" class="drill-settings" style="display: none; margin-bottom: 1rem; text-align: center;">
@@ -136,6 +153,10 @@ const navLesson = document.getElementById('nav-lesson')!;
 const navDrill = document.getElementById('nav-drill')!;
 const moduleSelect = document.getElementById('module-select') as HTMLSelectElement;
 const clefSelect = document.getElementById('clef-select') as HTMLSelectElement;
+const keySelect = document.getElementById('key-select') as HTMLSelectElement;
+const modeSelect = document.getElementById('mode-select') as HTMLSelectElement;
+const keySettings = document.getElementById('key-settings')!;
+const modeSelectContainer = document.getElementById('mode-select-container')!;
 const lessonContainer = document.getElementById('lesson-container')!;
 const drillContainer = document.getElementById('drill-container')!;
 const drillSettings = document.getElementById('drill-settings')!;
@@ -154,6 +175,15 @@ const textInput = document.getElementById('text-input') as HTMLInputElement;
 const btnMic = document.getElementById('btn-mic')!;
 const detectedNotesEl = document.getElementById('detected-notes')!;
 
+// Populate Key Select (Safe sort)
+const sortedKeys = [...KEYS].sort((a, b) => a.difficulty - b.difficulty);
+sortedKeys.forEach(k => {
+    const opt = document.createElement('option');
+    opt.value = k.id;
+    opt.text = `${k.root} ${k.type} (Level ${k.difficulty})`;
+    keySelect.add(opt);
+});
+
 // --- State Management ---
 
 stateManager.subscribe((state: AppState) => {
@@ -168,6 +198,7 @@ function updateUI(state: AppState) {
     lessonContainer.classList.add('active');
     drillContainer.classList.remove('active');
     drillSettings.style.display = 'none';
+    keySettings.style.display = 'none'; // Hide key settings in lesson mode for now
     renderLesson();
   } else {
     navLesson.classList.remove('active');
@@ -176,6 +207,20 @@ function updateUI(state: AppState) {
     drillContainer.classList.add('active');
     drillSettings.style.display = 'block';
 
+    // Show/Hide Key Settings based on module
+    if (['speed', 'interval', 'melody'].includes(state.module)) {
+        keySettings.style.display = 'block';
+
+        // Only show Mode selector for Melody drill
+        if (state.module === 'melody') {
+            modeSelectContainer.style.display = 'inline-block';
+        } else {
+            modeSelectContainer.style.display = 'none';
+        }
+    } else {
+        keySettings.style.display = 'none';
+    }
+
     // Re-render drill chord if switching to drill mode
     const chord = drillManager.getCurrentChord();
     if (chord) renderDrillChord();
@@ -183,6 +228,8 @@ function updateUI(state: AppState) {
 
   // Update Module Selector
   moduleSelect.value = state.module;
+  keySelect.value = state.selectedKeyId;
+  modeSelect.value = state.selectedMode;
 }
 // --- Event Listeners ---
 
@@ -200,6 +247,20 @@ moduleSelect.addEventListener('change', (e) => {
   }
 
   renderLesson();
+});
+
+keySelect.addEventListener('change', (e) => {
+    stateManager.setKey((e.target as HTMLSelectElement).value);
+    if (stateManager.getState().mode === 'drill') {
+        nextDrillQuestion();
+    }
+});
+
+modeSelect.addEventListener('change', (e) => {
+    stateManager.setKeyMode((e.target as HTMLSelectElement).value as KeyMode);
+    if (stateManager.getState().mode === 'drill') {
+        nextDrillQuestion();
+    }
 });
 
 clefSelect.addEventListener('change', () => {
@@ -366,7 +427,9 @@ function handleDrillInput(notes: NoteName[]): DrillResult | null {
 }
 
 function nextDrillQuestion() {
-  const chord = drillManager.getQuestion();
+  const state = stateManager.getState();
+  const chord = drillManager.getQuestion(state.selectedKeyId, state.selectedMode);
+
   questionEl.textContent = `Play: ${chord.name}`;
   feedbackEl.textContent = '';
   textInput.value = '';
@@ -380,11 +443,14 @@ function nextDrillQuestion() {
 function renderDrillChord() {
   const clef = clefSelect.value as 'treble' | 'bass';
   const octave = getCurrentOctave();
+  const state = stateManager.getState();
 
   // Use the new voicing method from DrillManager which handles inversions and octave shifts
   const vexNotes = drillManager.getVexFlowNotes(octave);
   const currentIndex = drillManager.getCurrentIndex();
-  drillNotation.render(vexNotes, clef, drillManager.isSequential, currentIndex);
+
+  // Pass the selected key to the notation renderer
+  drillNotation.render(vexNotes, clef, drillManager.isSequential, currentIndex, state.selectedKeyId);
 }
 
 document.getElementById('btn-next-drill')?.addEventListener('click', nextDrillQuestion);

@@ -5,6 +5,7 @@ import { ChordDrill } from './drills/ChordDrill';
 import { SpeedDrill } from './drills/SpeedDrill';
 import { IntervalDrill } from './drills/IntervalDrill';
 import { MelodyDrill } from './drills/MelodyDrill';
+import { KeyMode } from './keys';
 
 export class DrillManager {
   private strategy: DrillStrategy;
@@ -39,7 +40,15 @@ export class DrillManager {
     this.chordDrill.setOptions(enableInversions, enableWideRange);
   }
 
-  public getQuestion(): DrillQuestion {
+  public getQuestion(keyId: string = 'C', mode: KeyMode = 'Major'): DrillQuestion {
+    // Pass key context to strategy if supported
+    console.log(`[DrillManager] getQuestion called with Key: ${keyId}, Mode: ${mode}`);
+    if (this.strategy.setKeyContext) {
+        console.log(`[DrillManager] Setting key context on strategy`);
+        this.strategy.setKeyContext(keyId, mode);
+    } else {
+        console.log(`[DrillManager] Strategy does not support setKeyContext`);
+    }
     return this.strategy.getQuestion();
   }
 
@@ -49,7 +58,9 @@ export class DrillManager {
   }
 
   public getVexFlowNotes(baseOctave: number): string[] {
-    return this.strategy.getVexFlowNotes(baseOctave);
+    const notes = this.strategy.getVexFlowNotes(baseOctave);
+    console.log(`[DrillManager] VexFlow notes: ${JSON.stringify(notes)}`);
+    return notes;
   }
 
   public get isSequential(): boolean {

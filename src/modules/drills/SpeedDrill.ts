@@ -1,5 +1,6 @@
 import { NoteName } from '../content';
 import { DrillStrategy, DrillQuestion, DrillResult } from './DrillStrategy';
+import { getKeyById, getScaleForKey, KeyMode } from '../keys';
 
 interface SpeedNote {
     name: NoteName;
@@ -11,17 +12,25 @@ export class SpeedDrill implements DrillStrategy {
     private currentNote: SpeedNote | null = null;
     private score: number = 0;
     private total: number = 0;
+    private currentKeyId: string = 'C';
+
+    public setKeyContext(keyId: string, _mode: KeyMode) {
+        this.currentKeyId = keyId;
+    }
 
     public getQuestion(): DrillQuestion {
-        // Generate random note
-        // Full chromatic range C3 to C6
-        const names: NoteName[] = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-        const name = names[Math.floor(Math.random() * names.length)];
+        // Generate random note WITHIN the key
+        const key = getKeyById(this.currentKeyId);
+        const scale = key ? key.scale : ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as NoteName[];
+
+        // Pick random note from scale
+        const name = scale[Math.floor(Math.random() * scale.length)];
+
         // Octave 3, 4, 5
         const octave = 3 + Math.floor(Math.random() * 3);
 
         this.currentNote = { name, octave };
-        return { name: `${name}${octave}` };
+        return { name: `Note: ${name}` };
     }
 
     public checkAnswer(input: NoteName[]): DrillResult {

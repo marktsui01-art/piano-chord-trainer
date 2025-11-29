@@ -1,4 +1,5 @@
 import { NoteName } from '../content';
+import { KeyMode } from '../keys';
 
 export type DrillResult = 'correct' | 'incorrect' | 'continue';
 
@@ -12,6 +13,9 @@ export interface DrillStrategy {
     checkAnswer(input: NoteName[]): DrillResult;
     getScore(): string;
     resetScore(): void;
+
+    // Optional method to set key context
+    setKeyContext?(keyId: string, mode: KeyMode): void;
 
     /**
      * Returns notes formatted for VexFlow (e.g. "C/4")
