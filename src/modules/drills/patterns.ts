@@ -120,14 +120,16 @@ function generateArpeggioPattern(
 function generateIntervalPattern(
     key: KeySignature,
     mode: KeyMode,
-    length: number
+    length: number,
+    intervalStep: number
 ): MelodicPattern {
     const scale = getScaleForKey(key, mode);
     const rootNote = getModeRoot(key, mode);
     const startIndex = scale.indexOf(rootNote);
     const rootOctave = 4;
     const notes: { name: NoteName; octave: number }[] = [];
-    const intervalStep = 2;
+
+    // e.g. intervalStep=2 (3rds), =3 (4ths), =4 (5ths)
 
     for (let i = 0; i < length; i++) {
         const baseIndex = startIndex + i;
@@ -135,7 +137,16 @@ function generateIntervalPattern(
         notes.push(getNoteFromScale(scale, baseIndex, rootOctave));
         notes.push(getNoteFromScale(scale, targetIndex, rootOctave));
     }
-    return { notes, name: `${key.root} ${mode} Broken 3rds`, type: 'interval' };
+
+    const intervalNames: Record<number, string> = {
+        1: '2nds', 2: '3rds', 3: '4ths', 4: '5ths', 5: '6ths', 6: '7ths', 7: 'Octaves'
+    };
+
+    return {
+        notes,
+        name: `${key.root} ${mode} Broken ${intervalNames[intervalStep] || 'Intervals'}`,
+        type: 'interval'
+    };
 }
 
 function generateStepwisePattern(
@@ -230,7 +241,10 @@ export function generatePattern(
     } else if (r < 0.7) {
         return generateArpeggioPattern(key, mode, length);
     } else if (r < 0.85) {
-        return generateIntervalPattern(key, mode, Math.max(3, Math.floor(length / 2)));
+        // Random diatonic interval step (3rds, 4ths, 5ths)
+        // 2=3rd, 3=4th, 4=5th
+        const intervalStep = 2 + Math.floor(Math.random() * 3);
+        return generateIntervalPattern(key, mode, Math.max(3, Math.floor(length / 2)), intervalStep);
     } else {
         return generateStepwisePattern(key, mode, length);
     }
