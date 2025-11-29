@@ -57,7 +57,9 @@ app.innerHTML = `
              <label for="mode-select">Mode:</label>
              <select id="mode-select" class="module-select" style="width: auto;">
                  <option value="Major">Major (Ionian)</option>
-                 <option value="Minor">Minor (Aeolian)</option>
+                 <option value="Minor">Minor (Natural/Aeolian)</option>
+                 <option value="Harmonic Minor">Harmonic Minor</option>
+                 <option value="Melodic Minor">Melodic Minor</option>
                  <option value="Dorian">Dorian</option>
                  <option value="Mixolydian">Mixolydian</option>
              </select>

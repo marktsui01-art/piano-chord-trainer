@@ -1,6 +1,6 @@
 import { NoteName } from './content';
 
-export type KeyMode = 'Major' | 'Minor' | 'Dorian' | 'Mixolydian' | 'Chromatic';
+export type KeyMode = 'Major' | 'Minor' | 'Harmonic Minor' | 'Melodic Minor' | 'Dorian' | 'Mixolydian' | 'Chromatic';
 
 export interface KeySignature {
     id: string; // e.g., 'C', 'G', 'Dm'
@@ -21,7 +21,6 @@ const NOTES_FLAT: NoteName[] = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab',
 // Scale intervals in semitones
 export const MAJOR_SCALE_INTERVALS = [0, 2, 4, 5, 7, 9, 11];
 export const NATURAL_MINOR_INTERVALS = [0, 2, 3, 5, 7, 8, 10];
-// Harmonic/Melodic minor aren't used for Key Signatures per se, but good to have if we expand
 export const HARMONIC_MINOR_INTERVALS = [0, 2, 3, 5, 7, 8, 11];
 export const MELODIC_MINOR_INTERVALS = [0, 2, 3, 5, 7, 9, 11];
 
@@ -97,17 +96,28 @@ export function getScaleForKey(key: KeySignature, mode: KeyMode): NoteName[] {
         return NOTES_SHARP;
     }
 
+    // Special handling for Harmonic/Melodic Minor modes
+    // These modify the base key scale
+    if (mode === 'Harmonic Minor' || mode === 'Melodic Minor') {
+        const chromatic = key.accidentals >= 0 ? NOTES_SHARP : NOTES_FLAT;
+        const rootIndex = chromatic.indexOf(key.scale[0]); // Scale root (e.g. A for Am)
+        // Ensure we find the root
+        if (rootIndex === -1) {
+             // Fallback if root not found in chosen chromatic array (enharmonic issues)
+             // Just return natural minor key scale to be safe
+             return key.scale;
+        }
+
+        const intervals = mode === 'Harmonic Minor' ? HARMONIC_MINOR_INTERVALS : MELODIC_MINOR_INTERVALS;
+        return intervals.map(i => chromatic[(rootIndex + i) % 12]);
+    }
+
     // If mode matches key type (Major/Major or Minor/Minor), return key scale
     if ((mode === 'Major' && key.type === 'Major') || (mode === 'Minor' && key.type === 'Minor')) {
         return key.scale;
     }
 
-    // Since we are doing "Diatonic to the Key Signature", the pool of notes is ALWAYS just the key.scale.
-    // The "Mode" only determines the starting/root note (center) of the melody,
-    // but the notes themselves must belong to the Key Signature.
-
-    // For pattern generation, we might need to know the "tonic" of the mode.
-    // e.g. Key C Major, Mode Dorian -> Scale is C Major notes, but tonic is D.
+    // Default: Return key signature scale (Diatonic modes)
     return key.scale;
 }
 
@@ -122,7 +132,17 @@ export function getModeRoot(key: KeySignature, mode: KeyMode): NoteName {
         case 'Major': return scale[0]; // Ionian
         case 'Dorian': return scale[1]; // ii
         case 'Mixolydian': return scale[4]; // V
-        case 'Minor': return scale[5]; // Aeolian (Relative Minor)
+        case 'Minor':
+        case 'Harmonic Minor':
+        case 'Melodic Minor':
+            return scale[5]; // Aeolian root (Relative Minor of Major Key)
+            // Wait, if Key is ALREADY Minor (e.g. key.type='Minor'), then scale[0] is the root.
+            // If Key is Major (e.g. Key=C), then Minor Mode = A (scale[5]).
+            // If Key is Minor (e.g. Key=Am), then Minor Mode = A (scale[0]).
+
+            if (key.type === 'Minor') return scale[0];
+            return scale[5];
+
         default: return scale[0];
     }
 }
