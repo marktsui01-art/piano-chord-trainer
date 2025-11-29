@@ -14,18 +14,31 @@ export interface KeySignature {
 const NOTES_SHARP: NoteName[] = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const NOTES_FLAT: NoteName[] = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
 
+// ----------------------------------------
+// Music Theory Constants
+// ----------------------------------------
+
+// Scale intervals in semitones
+export const MAJOR_SCALE_INTERVALS = [0, 2, 4, 5, 7, 9, 11];
+export const NATURAL_MINOR_INTERVALS = [0, 2, 3, 5, 7, 8, 10];
+// Harmonic/Melodic minor aren't used for Key Signatures per se, but good to have if we expand
+export const HARMONIC_MINOR_INTERVALS = [0, 2, 3, 5, 7, 8, 11];
+export const MELODIC_MINOR_INTERVALS = [0, 2, 3, 5, 7, 9, 11];
+
+// ----------------------------------------
+// Helpers
+// ----------------------------------------
+
 // Helper to generate major scale
 function getMajorScale(rootIndex: number, useSharps: boolean): NoteName[] {
     const chromatic = useSharps ? NOTES_SHARP : NOTES_FLAT;
-    const intervals = [0, 2, 4, 5, 7, 9, 11];
-    return intervals.map(i => chromatic[(rootIndex + i) % 12]);
+    return MAJOR_SCALE_INTERVALS.map(i => chromatic[(rootIndex + i) % 12]);
 }
 
 // Helper to generate natural minor scale
 function getMinorScale(rootIndex: number, useSharps: boolean): NoteName[] {
     const chromatic = useSharps ? NOTES_SHARP : NOTES_FLAT;
-    const intervals = [0, 2, 3, 5, 7, 8, 10];
-    return intervals.map(i => chromatic[(rootIndex + i) % 12]);
+    return NATURAL_MINOR_INTERVALS.map(i => chromatic[(rootIndex + i) % 12]);
 }
 
 export const KEYS: KeySignature[] = [
