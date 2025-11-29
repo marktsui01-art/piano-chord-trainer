@@ -1,14 +1,14 @@
 import { NoteName } from './content';
 
-export type KeyMode = 'Major' | 'Minor' | 'Dorian' | 'Mixolydian';
+export type KeyMode = 'Major' | 'Minor' | 'Dorian' | 'Mixolydian' | 'Chromatic';
 
 export interface KeySignature {
     id: string; // e.g., 'C', 'G', 'Dm'
     root: NoteName;
-    type: 'Major' | 'Minor';
+    type: 'Major' | 'Minor' | 'Chromatic';
     accidentals: number; // + for sharps, - for flats
     difficulty: number; // 1 = Easy, 2 = Medium, 3 = Hard
-    scale: NoteName[]; // The 7 diatonic notes in order
+    scale: NoteName[]; // The 7 diatonic notes in order (or 12 for chromatic)
 }
 
 const NOTES_SHARP: NoteName[] = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -29,6 +29,10 @@ function getMinorScale(rootIndex: number, useSharps: boolean): NoteName[] {
 }
 
 export const KEYS: KeySignature[] = [
+    // Special: Chromatic (Legacy / Non-Diatonic)
+    // We treat C as root, but scale is full chromatic
+    { id: 'chromatic', root: 'C', type: 'Chromatic', accidentals: 0, difficulty: 0, scale: NOTES_SHARP },
+
     // Level 1: C Major / A Minor (No accidentals)
     { id: 'C', root: 'C', type: 'Major', accidentals: 0, difficulty: 1, scale: getMajorScale(0, true) },
     { id: 'Am', root: 'A', type: 'Minor', accidentals: 0, difficulty: 1, scale: getMinorScale(9, true) },
@@ -75,6 +79,11 @@ export function getKeyById(id: string): KeySignature | undefined {
 }
 
 export function getScaleForKey(key: KeySignature, mode: KeyMode): NoteName[] {
+    // If Chromatic, return full chromatic scale
+    if (key.type === 'Chromatic') {
+        return NOTES_SHARP;
+    }
+
     // If mode matches key type (Major/Major or Minor/Minor), return key scale
     if ((mode === 'Major' && key.type === 'Major') || (mode === 'Minor' && key.type === 'Minor')) {
         return key.scale;
@@ -93,11 +102,14 @@ export function getModeRoot(key: KeySignature, mode: KeyMode): NoteName {
     // Returns the root note for the given mode within the key signature
     // e.g. Key=C, Mode=Dorian -> returns D
 
+    if (key.type === 'Chromatic') return 'C'; // Default root
+
     const scale = key.scale;
     switch(mode) {
         case 'Major': return scale[0]; // Ionian
         case 'Dorian': return scale[1]; // ii
         case 'Mixolydian': return scale[4]; // V
         case 'Minor': return scale[5]; // Aeolian (Relative Minor)
+        default: return scale[0];
     }
 }
