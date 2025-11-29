@@ -76,15 +76,6 @@ function generateArpeggioPattern(
 
     for (let i = 0; i < length; i++) {
         // Cycle through arpeggio steps
-        const step = arpeggioSteps[i % arpeggioSteps.length];
-        const octaveShift = Math.floor(i / arpeggioSteps.length); // Shift up every full cycle?
-        // Actually, simple way:
-        // 1st note: step 0
-        // 2nd note: step 2
-        // 3rd note: step 4
-        // 4th note: step 7 (octave)
-        // 5th note: step 0 + 7 (next octave)
-
         // Let's just project the arpeggio pattern linearly
         const currentStep = arpeggioSteps[i % 4] + (7 * Math.floor(i / 4));
         const noteIndex = startIndex + currentStep;
@@ -96,6 +87,78 @@ function generateArpeggioPattern(
         notes,
         name: `${key.root} ${mode} Arpeggio`,
         type: 'arpeggio'
+    };
+}
+
+function generateIntervalPattern(
+    key: KeySignature,
+    mode: KeyMode,
+    length: number
+): MelodicPattern {
+    const scale = getScaleForKey(key, mode);
+    const rootNote = getModeRoot(key, mode);
+    const startIndex = scale.indexOf(rootNote);
+    const rootOctave = 4;
+
+    // Generates a sequence of diatonic intervals (e.g. 3rds: 1-3, 2-4, 3-5...)
+    // Or just repeated intervals from the root?
+    // The previous implementation did "root, root+interval, root+2*interval..."
+    // which effectively builds a stack.
+    // Let's do "Broken 3rds" (1-3, 2-4, 3-5) as it is a very common sight reading drill.
+
+    const notes: { name: NoteName; octave: number }[] = [];
+
+    // Interval size (3rd = 2 steps)
+    const intervalStep = 2;
+
+    for (let i = 0; i < length; i++) {
+        // 1-3, 2-4, 3-5 pattern
+        // i=0: base=0 (1), target=2 (3)
+        // i=1: base=1 (2), target=3 (4)
+
+        // Add pair of notes
+        const baseIndex = startIndex + i;
+        const targetIndex = baseIndex + intervalStep;
+
+        notes.push(getNoteFromScale(scale, baseIndex, rootOctave));
+        notes.push(getNoteFromScale(scale, targetIndex, rootOctave));
+    }
+
+    return {
+        notes,
+        name: `${key.root} ${mode} Broken 3rds`,
+        type: 'interval'
+    };
+}
+
+function generateStepwisePattern(
+    key: KeySignature,
+    mode: KeyMode,
+    length: number
+): MelodicPattern {
+    const scale = getScaleForKey(key, mode);
+    const rootNote = getModeRoot(key, mode);
+    const startIndex = scale.indexOf(rootNote);
+    const rootOctave = 4;
+
+    // Simple stepwise patterns (neighbor tones)
+    // 1-2-1, 1-7-1, etc.
+    // Let's implement a "Turn" or 5-finger pattern variation
+    // Pattern: 0, 1, 2, 1, 0
+    const relativeSteps = [0, 1, 2, 1, 0, -1, 0, 1];
+
+    const notes: { name: NoteName; octave: number }[] = [];
+
+    for (let i = 0; i < length; i++) {
+        const step = relativeSteps[i % relativeSteps.length];
+        const noteIndex = startIndex + step;
+        notes.push(getNoteFromScale(scale, noteIndex, rootOctave));
+    }
+
+    return {
+        notes,
+        name: `${key.root} ${mode} Stepwise`,
+        type: 'stepwise'
     };
 }
 
@@ -173,18 +236,24 @@ export function generatePattern(
     if (difficulty === 'intermediate') length = 8;
     if (difficulty === 'advanced') length = 16;
 
-    // Select pattern type based on weighted probability or difficulty
+    // Select pattern type based on weighted probability
     const r = Math.random();
 
-    // For now, let's mix them up
-    if (r < 0.4) {
-        // 40% Chance: Random Melody (The core request)
+    if (r < 0.3) {
+        // 30% Chance: Random Melody
         return generateRandomMelody(key, mode, length);
-    } else if (r < 0.7) {
-        // 30% Chance: Scale Run
+    } else if (r < 0.5) {
+        // 20% Chance: Scale Run
         return generateScalePattern(key, mode, length, Math.random() > 0.5);
-    } else {
-        // 30% Chance: Arpeggio
+    } else if (r < 0.7) {
+        // 20% Chance: Arpeggio
         return generateArpeggioPattern(key, mode, length);
+    } else if (r < 0.85) {
+        // 15% Chance: Intervals (Broken 3rds)
+        // Divide length by 2 since it generates pairs
+        return generateIntervalPattern(key, mode, Math.max(3, Math.floor(length / 2)));
+    } else {
+        // 15% Chance: Stepwise
+        return generateStepwisePattern(key, mode, length);
     }
 }
