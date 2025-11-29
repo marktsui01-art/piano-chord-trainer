@@ -15,6 +15,7 @@
     "prettier": "^3.6.2",
     "typescript": "^5.2.2",
     "vite": "^7.2.4",
+    "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.0.12"
   },
   "dependencies": {

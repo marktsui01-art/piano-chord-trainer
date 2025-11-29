@@ -8,6 +8,7 @@ import { DrillResult } from './modules/drills/DrillStrategy';
 import { NoteName } from './modules/content';
 import { StateManager, AppState, ChordModule } from './modules/state';
 import { LessonManager } from './modules/lesson';
+import './pwa';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 
