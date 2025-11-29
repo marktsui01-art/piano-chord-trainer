@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#grad1)" />
+
+  <!-- Piano Keys / Staff Hybrid -->
+  <g transform="translate(106, 130)">
+    <!-- White Keys Background -->
+    <rect x="0" y="0" width="300" height="200" rx="10" fill="white" />
+
+    <!-- Black Keys -->
+    <rect x="40" y="0" width="30" height="120" fill="#1e293b" rx="4" />
+    <rect x="80" y="0" width="30" height="120" fill="#1e293b" rx="4" />
+
+    <rect x="160" y="0" width="30" height="120" fill="#1e293b" rx="4" />
+    <rect x="200" y="0" width="30" height="120" fill="#1e293b" rx="4" />
+    <rect x="240" y="0" width="30" height="120" fill="#1e293b" rx="4" />
+
+    <!-- Staff Lines floating out -->
+    <path d="M-50,220 Q150,260 350,220" stroke="white" stroke-width="8" fill="none" opacity="0.8"/>
+    <path d="M-40,240 Q160,280 360,240" stroke="white" stroke-width="8" fill="none" opacity="0.8"/>
+
+    <!-- Music Note (Eighth Note) -->
+    <g transform="translate(130, 160) rotate(-15)">
+      <ellipse cx="20" cy="80" rx="25" ry="20" fill="#facc15" stroke="#b45309" stroke-width="2"/>
+      <rect x="38" y="-10" width="8" height="90" fill="#facc15" stroke="#b45309" stroke-width="2"/>
+      <path d="M42,-10 Q80,10 90,60" stroke="#facc15" stroke-width="12" fill="none" />
+      <path d="M42,-10 Q80,10 90,60" stroke="#b45309" stroke-width="3" fill="none" />
+    </g>
+  </g>
+</svg>
