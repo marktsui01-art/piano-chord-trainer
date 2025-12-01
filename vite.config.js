@@ -3,6 +3,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: './',
   plugins: [
     // VitePWA handles the generation of the service worker, manifest, and other PWA assets.
     // This allows the app to be installed and used offline, including caching of external audio samples.
