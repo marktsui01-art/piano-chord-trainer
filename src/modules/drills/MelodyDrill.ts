@@ -1,27 +1,48 @@
 import { NoteName } from '../content';
 import { DrillStrategy, DrillQuestion, DrillResult } from './DrillStrategy';
 import { generatePattern, Difficulty } from './patterns';
+import { KeyMode, getKeyById } from '../keys';
 
 export class MelodyDrill implements DrillStrategy {
     public readonly isSequential = true;
     private sequence: { name: NoteName, octave: number }[] = [];
     private currentIndex: number = 0;
-    private difficulty: Difficulty = 'beginner';
+
+    // Default context
+    private currentKeyId: string = 'C';
+    private currentMode: KeyMode = 'Major';
 
     private score: number = 0;
     private total: number = 0;
 
-    public setDifficulty(difficulty: Difficulty) {
-        this.difficulty = difficulty;
+    public setKeyContext(keyId: string, mode: KeyMode) {
+        this.currentKeyId = keyId;
+        this.currentMode = mode;
+    }
+
+    private getDifficulty(): Difficulty {
+        // Map key difficulty to pattern difficulty?
+        // Or just random for now as before?
+        // The user asked for "longer sequences up to 16 notes".
+        // Let's use the key difficulty to influence it slightly, or just random
+        // Actually, let's pick based on random for variety
+        const r = Math.random();
+        if (r < 0.33) return 'beginner';
+        if (r < 0.66) return 'intermediate';
+        return 'advanced';
     }
 
     public getQuestion(): DrillQuestion {
-        // Generate pattern based on difficulty
-        const pattern = generatePattern(this.difficulty);
+        // Generate pattern based on current key context and random difficulty
+        const pattern = generatePattern(this.currentKeyId, this.currentMode, this.getDifficulty());
         this.sequence = pattern.notes;
         this.currentIndex = 0;
 
-        return { name: pattern.name };
+        // Improve name display
+        const key = getKeyById(this.currentKeyId);
+        const displayName = key ? `${pattern.name} (${key.root} ${key.type})` : pattern.name;
+
+        return { name: displayName };
     }
 
     public getCurrentIndex(): number {

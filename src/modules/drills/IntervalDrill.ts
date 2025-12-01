@@ -1,50 +1,55 @@
 import { NoteName } from '../content';
 import { DrillStrategy, DrillQuestion, DrillResult } from './DrillStrategy';
+import { getKeyById, KeyMode } from '../keys';
 
 interface Interval {
     name: string;
-    semitones: number;
+    steps: number; // Scale steps (e.g. 2nd = 1 step)
 }
 
-const INTERVALS: Interval[] = [
-    { name: 'Minor 2nd', semitones: 1 },
-    { name: 'Major 2nd', semitones: 2 },
-    { name: 'Minor 3rd', semitones: 3 },
-    { name: 'Major 3rd', semitones: 4 },
-    { name: 'Perfect 4th', semitones: 5 },
-    { name: 'Tritone', semitones: 6 },
-    { name: 'Perfect 5th', semitones: 7 },
-    { name: 'Minor 6th', semitones: 8 },
-    { name: 'Major 6th', semitones: 9 },
-    { name: 'Minor 7th', semitones: 10 },
-    { name: 'Major 7th', semitones: 11 },
-    { name: 'Octave', semitones: 12 }
+const DIATONIC_INTERVALS: Interval[] = [
+    { name: '2nd', steps: 1 },
+    { name: '3rd', steps: 2 },
+    { name: '4th', steps: 3 },
+    { name: '5th', steps: 4 },
+    { name: '6th', steps: 5 },
+    { name: '7th', steps: 6 },
+    { name: 'Octave', steps: 7 }
 ];
-
-const CHROMATIC_SCALE: NoteName[] = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
 export class IntervalDrill implements DrillStrategy {
     public readonly isSequential = false;
     private currentRoot: { name: NoteName, octave: number } | null = null;
     private targetNote: { name: NoteName, octave: number } | null = null;
+    private currentKeyId: string = 'C';
 
     private score: number = 0;
     private total: number = 0;
 
+    public setKeyContext(keyId: string, _mode: KeyMode) {
+        this.currentKeyId = keyId;
+    }
+
     public getQuestion(): DrillQuestion {
-        // Random Root (C3 to C5)
-        const rootName = CHROMATIC_SCALE[Math.floor(Math.random() * CHROMATIC_SCALE.length)];
+        const key = getKeyById(this.currentKeyId);
+        const scale = key ? key.scale : ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as NoteName[];
+
+        // Random Root from Key Scale (C3 to C5 approx)
+        const rootIndex = Math.floor(Math.random() * scale.length);
+        const rootName = scale[rootIndex];
         const rootOctave = 3 + Math.floor(Math.random() * 2); // 3 or 4
 
-        // Random Interval
-        const interval = INTERVALS[Math.floor(Math.random() * INTERVALS.length)];
+        // Random Diatonic Interval
+        const interval = DIATONIC_INTERVALS[Math.floor(Math.random() * DIATONIC_INTERVALS.length)];
 
         // Calculate Target
-        const rootIndex = CHROMATIC_SCALE.indexOf(rootName);
-        let targetIndex = rootIndex + interval.semitones;
-        let targetOctave = rootOctave + Math.floor(targetIndex / 12);
-        targetIndex = targetIndex % 12;
-        const targetName = CHROMATIC_SCALE[targetIndex];
+        // We need to walk up the scale 'interval.steps' times
+        const targetScaleIndex = rootIndex + interval.steps;
+        const targetName = scale[targetScaleIndex % scale.length];
+
+        // Calculate octave wrap
+        const octaveShift = Math.floor(targetScaleIndex / scale.length);
+        const targetOctave = rootOctave + octaveShift;
 
         this.currentRoot = { name: rootName, octave: rootOctave };
         this.targetNote = { name: targetName, octave: targetOctave };
@@ -80,8 +85,7 @@ export class IntervalDrill implements DrillStrategy {
 
     public getPlaybackNotes(_baseOctave: number): string[] {
         if (!this.currentRoot || !this.targetNote) return [];
-        // Play Root then Target? Or just Root?
-        // Let's play Root so user hears it.
+        // Play Root so user hears it
         return [`${this.currentRoot.name}${this.currentRoot.octave}`];
     }
 }

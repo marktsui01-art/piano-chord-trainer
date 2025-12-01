@@ -8,7 +8,7 @@ describe('MelodyDrill', () => {
         drill = new MelodyDrill();
         // Force a known pattern for testing: C-D-E-F-G
         // We can't easily force the random generator, but we can check the sequence after getQuestion
-        drill.setDifficulty('beginner');
+        // drill.setDifficulty('beginner'); // REMOVED: Method no longer exists
         drill.getQuestion();
     });
 
@@ -18,14 +18,31 @@ describe('MelodyDrill', () => {
         const firstNote = sequence[0].name;
 
         const result = drill.checkAnswer([firstNote]);
-        expect(result).toBe('continue');
+
+        // If the sequence is only 1 note long (unlikely but possible with random), it would be 'correct'
+        if (sequence.length === 1) {
+             expect(result).toBe('correct');
+        } else {
+             expect(result).toBe('continue');
+        }
+
         expect(drill.getCurrentIndex()).toBe(1);
     });
 
     it('should advance multiple steps for multiple correct notes in sequence', () => {
         const sequence = (drill as any).sequence;
-        const firstNote = sequence[0].name;
-        const secondNote = sequence[1].name;
+        // Ensure we have at least 3 notes for this test
+        if (sequence.length < 3) {
+            (drill as any).sequence = [
+                { name: 'C', octave: 4 },
+                { name: 'D', octave: 4 },
+                { name: 'E', octave: 4 }
+            ];
+            (drill as any).currentIndex = 0;
+        }
+
+        const firstNote = (drill as any).sequence[0].name;
+        const secondNote = (drill as any).sequence[1].name;
 
         // Simulate typing two notes quickly or pasting
         const result = drill.checkAnswer([firstNote, secondNote]);

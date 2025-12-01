@@ -1,9 +1,13 @@
+import { KeyMode } from './keys';
+
 export type AppMode = 'lesson' | 'drill';
 export type ChordModule = 'triads' | 'sevenths' | 'speed' | 'interval' | 'melody';
 
 export interface AppState {
   mode: AppMode;
   module: ChordModule;
+  selectedKeyId: string; // e.g. 'C', 'G'
+  selectedMode: KeyMode; // e.g. 'Major', 'Dorian'
 }
 
 type StateListener = (state: AppState) => void;
@@ -16,6 +20,8 @@ export class StateManager {
     this.state = {
       mode: 'lesson',
       module: 'triads',
+      selectedKeyId: 'C',
+      selectedMode: 'Major'
     };
   }
 
@@ -35,6 +41,20 @@ export class StateManager {
       this.state.module = module;
       this.notify();
     }
+  }
+
+  public setKey(keyId: string) {
+    if (this.state.selectedKeyId !== keyId) {
+        this.state.selectedKeyId = keyId;
+        this.notify();
+    }
+  }
+
+  public setKeyMode(mode: KeyMode) {
+      if (this.state.selectedMode !== mode) {
+          this.state.selectedMode = mode;
+          this.notify();
+      }
   }
 
   public subscribe(listener: StateListener) {

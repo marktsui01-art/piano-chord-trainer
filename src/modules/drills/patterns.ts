@@ -1,8 +1,8 @@
 import { NoteName } from '../content';
+import { KeySignature, KeyMode, getScaleForKey, getModeRoot, getKeyById } from '../keys';
 
-export type PatternType = 'scale' | 'arpeggio' | 'interval' | 'stepwise';
+export type PatternType = 'scale' | 'arpeggio' | 'interval' | 'stepwise' | 'random';
 export type Difficulty = 'beginner' | 'intermediate' | 'advanced';
-export type ScaleType = 'major' | 'naturalMinor' | 'harmonicMinor' | 'melodicMinor';
 
 export interface MelodicPattern {
     notes: { name: NoteName; octave: number }[];
@@ -10,19 +10,21 @@ export interface MelodicPattern {
     type: PatternType;
 }
 
+// ----------------------------------------
+// Musical Helpers
+// ----------------------------------------
+
 const CHROMATIC_SCALE: NoteName[] = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
-// Major scale intervals (in semitones from root)
-const MAJOR_SCALE_INTERVALS = [0, 2, 4, 5, 7, 9, 11, 12];
-const NATURAL_MINOR_INTERVALS = [0, 2, 3, 5, 7, 8, 10, 12];
-const HARMONIC_MINOR_INTERVALS = [0, 2, 3, 5, 7, 8, 11, 12];
-const MELODIC_MINOR_INTERVALS = [0, 2, 3, 5, 7, 9, 11, 12];
+// Legacy Arpeggio Intervals (Chromatic Semitones)
+export const MAJOR_TRIAD = [0, 4, 7, 12];
+export const MINOR_TRIAD = [0, 3, 7, 12];
+export const MAJOR_SEVENTH = [0, 4, 7, 11];
+export const MINOR_SEVENTH = [0, 3, 7, 10];
 
-// Arpeggio intervals
-const MAJOR_TRIAD = [0, 4, 7, 12];
-const MINOR_TRIAD = [0, 3, 7, 12];
-const MAJOR_SEVENTH = [0, 4, 7, 11];
-const MINOR_SEVENTH = [0, 3, 7, 10];
+// Diatonic Arpeggio Steps (Scale Degrees: 1-3-5-8, 1-3-5-7)
+export const DIATONIC_TRIAD_STEPS = [0, 2, 4, 7]; // Triad + Octave
+export const DIATONIC_SEVENTH_STEPS = [0, 2, 4, 6];
 
 function getNoteFromInterval(root: NoteName, rootOctave: number, semitones: number): { name: NoteName; octave: number } {
     const rootIndex = CHROMATIC_SCALE.indexOf(root);
@@ -35,174 +37,264 @@ function getNoteFromInterval(root: NoteName, rootOctave: number, semitones: numb
     };
 }
 
-function generateScalePattern(
-    root: NoteName,
-    rootOctave: number,
-    scaleType: ScaleType,
-    length: number,
-    ascending: boolean = true
-): MelodicPattern {
-    let intervals: number[];
-    let scaleName: string;
-
-    switch (scaleType) {
-        case 'major':
-            intervals = MAJOR_SCALE_INTERVALS;
-            scaleName = 'Major';
-            break;
-        case 'naturalMinor':
-            intervals = NATURAL_MINOR_INTERVALS;
-            scaleName = 'Natural Minor';
-            break;
-        case 'harmonicMinor':
-            intervals = HARMONIC_MINOR_INTERVALS;
-            scaleName = 'Harmonic Minor';
-            break;
-        case 'melodicMinor':
-            intervals = MELODIC_MINOR_INTERVALS;
-            scaleName = 'Melodic Minor';
-            break;
-    }
-
-    // Take first 'length' notes
-    const selectedIntervals = intervals.slice(0, Math.min(length, intervals.length));
-
-    let notes = selectedIntervals.map(interval => getNoteFromInterval(root, rootOctave, interval));
-
-    if (!ascending) {
-        notes = notes.reverse();
-    }
-
-    const direction = ascending ? 'Ascending' : 'Descending';
-    const name = `${root} ${scaleName} ${direction}`;
-
-    return { notes, name, type: 'scale' };
+function getNoteFromScale(scale: NoteName[], scaleIndex: number, rootOctave: number): { name: NoteName, octave: number } {
+    const note = scale[scaleIndex % 7];
+    // Calculate octave shift based on how many times we wrapped around the 7-note scale
+    const octaveOffset = Math.floor(scaleIndex / 7);
+    return { name: note, octave: rootOctave + octaveOffset };
 }
 
-function generateArpeggioPattern(
-    root: NoteName,
-    rootOctave: number,
-    arpeggioType: 'major' | 'minor' | 'maj7' | 'min7',
-    ascending: boolean = true
-): MelodicPattern {
-    let intervals: number[];
-    let arpeggioName: string;
+// ----------------------------------------
+// Pattern Generators
+// ----------------------------------------
 
-    switch (arpeggioType) {
-        case 'major':
-            intervals = MAJOR_TRIAD;
-            arpeggioName = 'Major';
-            break;
-        case 'minor':
-            intervals = MINOR_TRIAD;
-            arpeggioName = 'Minor';
-            break;
-        case 'maj7':
-            intervals = MAJOR_SEVENTH;
-            arpeggioName = 'Major 7th';
-            break;
-        case 'min7':
-            intervals = MINOR_SEVENTH;
-            arpeggioName = 'Minor 7th';
-            break;
-    }
+// --- Chromatic / Legacy Generators ---
 
-    let notes = intervals.map(interval => getNoteFromInterval(root, rootOctave, interval));
-
-    if (!ascending) {
-        notes = notes.reverse();
-    }
-
-    const direction = ascending ? 'Ascending' : 'Descending';
-    const name = `${root} ${arpeggioName} Arpeggio ${direction}`;
-
-    return { notes, name, type: 'arpeggio' };
-}
-
-function generateIntervalPattern(
+function generateChromaticIntervalPattern(
     root: NoteName,
     rootOctave: number,
     interval: number,
     length: number = 5
 ): MelodicPattern {
     const notes: { name: NoteName; octave: number }[] = [];
-
     for (let i = 0; i < length; i++) {
         notes.push(getNoteFromInterval(root, rootOctave, i * interval));
     }
-
     const intervalNames: Record<number, string> = {
-        2: '2nds',
-        3: 'Minor 3rds',
-        4: 'Major 3rds',
-        5: '4ths',
-        7: '5ths'
+        2: '2nds', 3: 'Minor 3rds', 4: 'Major 3rds', 5: '4ths', 7: '5ths'
     };
-
-    const name = `${root} ${intervalNames[interval] || 'Intervals'}`;
-
-    return { notes, name, type: 'interval' };
+    return { notes, name: `${root} ${intervalNames[interval] || 'Intervals'} (Chromatic)`, type: 'interval' };
 }
 
-function generateStepwisePattern(
+function generateChromaticStepwisePattern(
     root: NoteName,
     rootOctave: number,
     length: number = 5
 ): MelodicPattern {
-    // Simple stepwise pattern (like C-D-E-D-C or C-D-E-F-G)
+    // Simple stepwise pattern (like C-D-E-D-C or C-D-E-F-G) - Chromatic logic uses Major Scale steps usually
+    // Replicating old logic:
     const patterns = [
         [0, 2, 4, 2, 0],           // Up and down
         [0, 2, 4, 5, 7],           // 5-finger ascending
         [7, 5, 4, 2, 0],           // 5-finger descending
         [0, 2, 0, 4, 2, 0],        // Neighbor tones
     ];
-
     const selectedPattern = patterns[Math.floor(Math.random() * patterns.length)];
     const intervals = selectedPattern.slice(0, length);
-
     const notes = intervals.map(interval => getNoteFromInterval(root, rootOctave, interval));
-
-    return { notes, name: `${root} Stepwise Pattern`, type: 'stepwise' };
+    return { notes, name: `${root} Stepwise Pattern (Chromatic)`, type: 'stepwise' };
 }
 
-export function generatePattern(difficulty: Difficulty): MelodicPattern {
-    // Random root note (C, D, E, F, G for simplicity)
-    const roots: NoteName[] = ['C', 'D', 'E', 'F', 'G'];
-    const root = roots[Math.floor(Math.random() * roots.length)];
+function generateChromaticArpeggioPattern(
+    root: NoteName,
+    rootOctave: number,
+    type: 'major' | 'minor' | 'maj7' | 'min7' = 'major',
+    length: number = 4
+): MelodicPattern {
+    let intervals: number[];
+    let nameSuffix: string;
+
+    switch (type) {
+        case 'major': intervals = MAJOR_TRIAD; nameSuffix = 'Major Arpeggio'; break;
+        case 'minor': intervals = MINOR_TRIAD; nameSuffix = 'Minor Arpeggio'; break;
+        case 'maj7': intervals = MAJOR_SEVENTH; nameSuffix = 'Major 7th Arpeggio'; break;
+        case 'min7': intervals = MINOR_SEVENTH; nameSuffix = 'Minor 7th Arpeggio'; break;
+        default: intervals = MAJOR_TRIAD; nameSuffix = 'Major Arpeggio'; break;
+    }
+
+    // Repeat intervals to match length if needed
+    const notes: { name: NoteName; octave: number }[] = [];
+    for (let i = 0; i < length; i++) {
+        // Project pattern linearly: 0, 4, 7, 12, 12+0, 12+4...
+        // Cycle length is usually 4 (triad+oct or 7th)
+        const cycleLen = intervals.length;
+        // Base interval within the cycle
+        const baseInterval = intervals[i % cycleLen];
+        // Octave offset for repeats (every full cycle adds 12 semitones)
+        const cycleOffset = 12 * Math.floor(i / cycleLen);
+
+        notes.push(getNoteFromInterval(root, rootOctave, baseInterval + cycleOffset));
+    }
+
+    return { notes, name: `${root} ${nameSuffix} (Chromatic)`, type: 'arpeggio' };
+}
+
+// --- Diatonic Generators ---
+
+function generateScalePattern(
+    key: KeySignature,
+    mode: KeyMode,
+    length: number,
+    ascending: boolean = true
+): MelodicPattern {
+    const scale = getScaleForKey(key, mode);
+    const rootNote = getModeRoot(key, mode);
+    let startIndex = scale.indexOf(rootNote);
+    const rootOctave = 4;
+    const notes: { name: NoteName; octave: number }[] = [];
+
+    for (let i = 0; i < length; i++) {
+        const noteIndex = startIndex + i;
+        notes.push(getNoteFromScale(scale, noteIndex, rootOctave));
+    }
+    if (!ascending) notes.reverse();
+    return { notes, name: `${rootNote} ${mode} Scale`, type: 'scale' };
+}
+
+function generateArpeggioPattern(
+    key: KeySignature,
+    mode: KeyMode,
+    length: number
+): MelodicPattern {
+    const scale = getScaleForKey(key, mode);
+    const rootNote = getModeRoot(key, mode);
+    const startIndex = scale.indexOf(rootNote);
     const rootOctave = 4;
 
-    const ascending = Math.random() > 0.5;
+    // Use Diatonic Steps constant
+    const arpeggioSteps = DIATONIC_TRIAD_STEPS;
+    const notes: { name: NoteName; octave: number }[] = [];
 
-    switch (difficulty) {
-        case 'beginner':
-            // Simple 5-note patterns
-            const beginnerPatterns = [
-                () => generateScalePattern(root, rootOctave, 'major', 5, ascending),
-                () => generateStepwisePattern(root, rootOctave, 5),
-                () => generateArpeggioPattern(root, rootOctave, 'major', ascending),
-            ];
-            return beginnerPatterns[Math.floor(Math.random() * beginnerPatterns.length)]();
+    for (let i = 0; i < length; i++) {
+        const currentStep = arpeggioSteps[i % 4] + (7 * Math.floor(i / 4));
+        const noteIndex = startIndex + currentStep;
+        notes.push(getNoteFromScale(scale, noteIndex, rootOctave));
+    }
+    return { notes, name: `${rootNote} ${mode} Arpeggio`, type: 'arpeggio' };
+}
 
-        case 'intermediate':
-            // Full octave scales and 7th arpeggios
-            const intermediatePatterns = [
-                () => generateScalePattern(root, rootOctave, 'major', 8, ascending),
-                () => generateScalePattern(root, rootOctave, 'naturalMinor', 8, ascending),
-                () => generateArpeggioPattern(root, rootOctave, 'maj7', ascending),
-                () => generateArpeggioPattern(root, rootOctave, 'min7', ascending),
-                () => generateIntervalPattern(root, rootOctave, 4, 5), // Major 3rds
-            ];
-            return intermediatePatterns[Math.floor(Math.random() * intermediatePatterns.length)]();
+function generateIntervalPattern(
+    key: KeySignature,
+    mode: KeyMode,
+    length: number,
+    intervalStep: number
+): MelodicPattern {
+    const scale = getScaleForKey(key, mode);
+    const rootNote = getModeRoot(key, mode);
+    const startIndex = scale.indexOf(rootNote);
+    const rootOctave = 4;
+    const notes: { name: NoteName; octave: number }[] = [];
 
-        case 'advanced':
-            // Complex patterns with harmonic/melodic minor
-            const advancedPatterns = [
-                () => generateScalePattern(root, rootOctave, 'harmonicMinor', 8, ascending),
-                () => generateScalePattern(root, rootOctave, 'melodicMinor', 8, ascending),
-                () => generateIntervalPattern(root, rootOctave, 5, 6), // 4ths
-                () => generateIntervalPattern(root, rootOctave, 7, 5), // 5ths
-                () => generateArpeggioPattern(root, rootOctave, 'min7', ascending),
-            ];
-            return advancedPatterns[Math.floor(Math.random() * advancedPatterns.length)]();
+    // e.g. intervalStep=2 (3rds), =3 (4ths), =4 (5ths)
+
+    for (let i = 0; i < length; i++) {
+        const baseIndex = startIndex + i;
+        const targetIndex = baseIndex + intervalStep;
+        notes.push(getNoteFromScale(scale, baseIndex, rootOctave));
+        notes.push(getNoteFromScale(scale, targetIndex, rootOctave));
+    }
+
+    const intervalNames: Record<number, string> = {
+        1: '2nds', 2: '3rds', 3: '4ths', 4: '5ths', 5: '6ths', 6: '7ths', 7: 'Octaves'
+    };
+
+    return {
+        notes,
+        name: `${rootNote} ${mode} Broken ${intervalNames[intervalStep] || 'Intervals'}`,
+        type: 'interval'
+    };
+}
+
+function generateStepwisePattern(
+    key: KeySignature,
+    mode: KeyMode,
+    length: number
+): MelodicPattern {
+    const scale = getScaleForKey(key, mode);
+    const rootNote = getModeRoot(key, mode);
+    const startIndex = scale.indexOf(rootNote);
+    const rootOctave = 4;
+    const relativeSteps = [0, 1, 2, 1, 0, -1, 0, 1];
+    const notes: { name: NoteName; octave: number }[] = [];
+
+    for (let i = 0; i < length; i++) {
+        const step = relativeSteps[i % relativeSteps.length];
+        const noteIndex = startIndex + step;
+        notes.push(getNoteFromScale(scale, noteIndex, rootOctave));
+    }
+    return { notes, name: `${rootNote} ${mode} Stepwise`, type: 'stepwise' };
+}
+
+function generateRandomMelody(
+    key: KeySignature,
+    mode: KeyMode,
+    length: number
+): MelodicPattern {
+    const scale = getScaleForKey(key, mode);
+    const rootNote = getModeRoot(key, mode);
+    const startIndex = scale.indexOf(rootNote);
+    const rootOctave = 4;
+    const startDegrees = [0, 2, 4];
+    let currentScaleDegree = startIndex + startDegrees[Math.floor(Math.random() * startDegrees.length)];
+    const notes: { name: NoteName; octave: number }[] = [];
+
+    notes.push(getNoteFromScale(scale, currentScaleDegree, rootOctave));
+
+    for (let i = 1; i < length; i++) {
+        const r = Math.random();
+        let interval = 0;
+        if (r < 0.60) interval = Math.random() > 0.5 ? 1 : -1;
+        else if (r < 0.85) interval = Math.random() > 0.5 ? 2 : -2;
+        else {
+            interval = Math.random() > 0.5 ? 3 : -3;
+            if (Math.random() > 0.7) interval = interval > 0 ? 4 : -4;
+        }
+        const potentialNext = currentScaleDegree + interval;
+        if (potentialNext < startIndex - 5 || potentialNext > startIndex + 12) interval = -interval;
+        currentScaleDegree += interval;
+        notes.push(getNoteFromScale(scale, currentScaleDegree, rootOctave));
+    }
+    return { notes, name: `Melody in ${mode}`, type: 'random' };
+}
+
+export function generatePattern(
+    keyId: string,
+    mode: KeyMode,
+    difficulty: Difficulty = 'beginner'
+): MelodicPattern {
+    const key = getKeyById(keyId);
+    if (!key) throw new Error(`Invalid key: ${keyId}`);
+
+    // Adjust length
+    let length = 5;
+    if (difficulty === 'intermediate') length = 8;
+    if (difficulty === 'advanced') length = 16;
+
+    // --- Chromatic / Legacy Logic ---
+    if (key.type === 'Chromatic') {
+        const roots: NoteName[] = ['C', 'D', 'E', 'F', 'G'];
+        const root = roots[Math.floor(Math.random() * roots.length)];
+        const rootOctave = 4;
+
+        // Randomly pick legacy pattern types
+        const r = Math.random();
+        if (r < 0.4) {
+            // Intervals (e.g. Major 3rds, 4ths)
+            const interval = [4, 5, 7][Math.floor(Math.random() * 3)];
+            return generateChromaticIntervalPattern(root, rootOctave, interval, length);
+        } else if (r < 0.7) {
+            // Arpeggios (restored)
+            return generateChromaticArpeggioPattern(root, rootOctave, 'major', length);
+        } else {
+            // Stepwise
+            return generateChromaticStepwisePattern(root, rootOctave, length);
+        }
+    }
+
+    // --- Diatonic Logic ---
+    const r = Math.random();
+    if (r < 0.3) {
+        return generateRandomMelody(key, mode, length);
+    } else if (r < 0.5) {
+        return generateScalePattern(key, mode, length, Math.random() > 0.5);
+    } else if (r < 0.7) {
+        return generateArpeggioPattern(key, mode, length);
+    } else if (r < 0.85) {
+        // Random diatonic interval step (3rds, 4ths, 5ths)
+        // 2=3rd, 3=4th, 4=5th
+        const intervalStep = 2 + Math.floor(Math.random() * 3);
+        return generateIntervalPattern(key, mode, Math.max(3, Math.floor(length / 2)), intervalStep);
+    } else {
+        return generateStepwisePattern(key, mode, length);
     }
 }
