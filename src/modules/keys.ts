@@ -100,12 +100,18 @@ export function getScaleForKey(key: KeySignature, mode: KeyMode): NoteName[] {
     // These modify the base key scale
     if (mode === 'Harmonic Minor' || mode === 'Melodic Minor') {
         const chromatic = key.accidentals >= 0 ? NOTES_SHARP : NOTES_FLAT;
-        const rootIndex = chromatic.indexOf(key.scale[0]); // Scale root (e.g. A for Am)
+
+        // Determine root of the minor scale
+        // If Key is Major, use Relative Minor (scale[5])
+        // If Key is Minor, use Tonic (scale[0])
+        const minorRoot = key.type === 'Major' ? key.scale[5] : key.scale[0];
+
+        const rootIndex = chromatic.indexOf(minorRoot); // Scale root (e.g. A for Am)
         // Ensure we find the root
         if (rootIndex === -1) {
-             // Fallback if root not found in chosen chromatic array (enharmonic issues)
-             // Just return natural minor key scale to be safe
-             return key.scale;
+            // Fallback if root not found in chosen chromatic array (enharmonic issues)
+            // Just return natural minor key scale to be safe
+            return key.scale;
         }
 
         const intervals = mode === 'Harmonic Minor' ? HARMONIC_MINOR_INTERVALS : MELODIC_MINOR_INTERVALS;
@@ -128,20 +134,24 @@ export function getModeRoot(key: KeySignature, mode: KeyMode): NoteName {
     if (key.type === 'Chromatic') return 'C'; // Default root
 
     const scale = key.scale;
-    switch(mode) {
-        case 'Major': return scale[0]; // Ionian
-        case 'Dorian': return scale[1]; // ii
-        case 'Mixolydian': return scale[4]; // V
+    switch (mode) {
+        case 'Major':
+            // Ionian: Index 0 in Major, Index 2 in Minor
+            return key.type === 'Minor' ? scale[2] : scale[0];
+
+        case 'Dorian':
+            // Dorian: Index 1 in Major, Index 3 in Minor
+            return key.type === 'Minor' ? scale[3] : scale[1];
+
+        case 'Mixolydian':
+            // Mixolydian: Index 4 in Major, Index 6 in Minor
+            return key.type === 'Minor' ? scale[6] : scale[4];
+
         case 'Minor':
         case 'Harmonic Minor':
         case 'Melodic Minor':
-            return scale[5]; // Aeolian root (Relative Minor of Major Key)
-            // Wait, if Key is ALREADY Minor (e.g. key.type='Minor'), then scale[0] is the root.
-            // If Key is Major (e.g. Key=C), then Minor Mode = A (scale[5]).
-            // If Key is Minor (e.g. Key=Am), then Minor Mode = A (scale[0]).
-
-            if (key.type === 'Minor') return scale[0];
-            return scale[5];
+            // Aeolian/Minor: Index 5 in Major, Index 0 in Minor
+            return key.type === 'Minor' ? scale[0] : scale[5];
 
         default: return scale[0];
     }

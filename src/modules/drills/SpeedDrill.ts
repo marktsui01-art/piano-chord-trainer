@@ -1,6 +1,6 @@
 import { NoteName } from '../content';
 import { DrillStrategy, DrillQuestion, DrillResult } from './DrillStrategy';
-import { getKeyById, getScaleForKey, KeyMode } from '../keys';
+import { getKeyById, KeyMode } from '../keys';
 
 interface SpeedNote {
     name: NoteName;

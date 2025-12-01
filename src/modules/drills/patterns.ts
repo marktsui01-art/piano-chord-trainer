@@ -138,7 +138,7 @@ function generateScalePattern(
         notes.push(getNoteFromScale(scale, noteIndex, rootOctave));
     }
     if (!ascending) notes.reverse();
-    return { notes, name: `${key.root} ${mode} Scale`, type: 'scale' };
+    return { notes, name: `${rootNote} ${mode} Scale`, type: 'scale' };
 }
 
 function generateArpeggioPattern(
@@ -160,7 +160,7 @@ function generateArpeggioPattern(
         const noteIndex = startIndex + currentStep;
         notes.push(getNoteFromScale(scale, noteIndex, rootOctave));
     }
-    return { notes, name: `${key.root} ${mode} Arpeggio`, type: 'arpeggio' };
+    return { notes, name: `${rootNote} ${mode} Arpeggio`, type: 'arpeggio' };
 }
 
 function generateIntervalPattern(
@@ -190,7 +190,7 @@ function generateIntervalPattern(
 
     return {
         notes,
-        name: `${key.root} ${mode} Broken ${intervalNames[intervalStep] || 'Intervals'}`,
+        name: `${rootNote} ${mode} Broken ${intervalNames[intervalStep] || 'Intervals'}`,
         type: 'interval'
     };
 }
@@ -212,7 +212,7 @@ function generateStepwisePattern(
         const noteIndex = startIndex + step;
         notes.push(getNoteFromScale(scale, noteIndex, rootOctave));
     }
-    return { notes, name: `${key.root} ${mode} Stepwise`, type: 'stepwise' };
+    return { notes, name: `${rootNote} ${mode} Stepwise`, type: 'stepwise' };
 }
 
 function generateRandomMelody(
@@ -269,15 +269,15 @@ export function generatePattern(
         // Randomly pick legacy pattern types
         const r = Math.random();
         if (r < 0.4) {
-             // Intervals (e.g. Major 3rds, 4ths)
-             const interval = [4, 5, 7][Math.floor(Math.random() * 3)];
-             return generateChromaticIntervalPattern(root, rootOctave, interval, length);
+            // Intervals (e.g. Major 3rds, 4ths)
+            const interval = [4, 5, 7][Math.floor(Math.random() * 3)];
+            return generateChromaticIntervalPattern(root, rootOctave, interval, length);
         } else if (r < 0.7) {
-             // Arpeggios (restored)
-             return generateChromaticArpeggioPattern(root, rootOctave, 'major', length);
+            // Arpeggios (restored)
+            return generateChromaticArpeggioPattern(root, rootOctave, 'major', length);
         } else {
-             // Stepwise
-             return generateChromaticStepwisePattern(root, rootOctave, length);
+            // Stepwise
+            return generateChromaticStepwisePattern(root, rootOctave, length);
         }
     }
 
