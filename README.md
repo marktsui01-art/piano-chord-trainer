@@ -1,91 +1,76 @@
-# **Project: Piano Chord Trainer - V1.0 Requirements**
+# Piano Chord Trainer (Alpha)
 
-## **1.0 Overview**
+A comprehensive web-based tool for intermediate piano players to master chords, intervals, and sight-reading.
 
-### **1.1 Project Purpose**
+![Piano Chord Trainer Screenshot](public/app-screenshot.png)
 
-A web-based piano chord trainer designed to help intermediate players master chord theory, recognition, and sight-reading in a practical, drill-based format.
+## Overview
 
-### **1.2 Target Audience**
+Piano Chord Trainer is a progressive web application (PWA) designed to help musicians build fluency in identifying and playing chords, voicings, and inversions. Unlike basic flashcard apps, it emphasizes musical context by rendering notation on a staff and supporting real-time MIDI input.
 
-Intermediate piano players. This user is assumed to have basic note-reading skills but wants to build fluency in identifying and playing chords, voicings, and inversions quickly.
+## Features
 
-## **2.0 Core Features**
+### 🎹 Core Capabilities
+*   **Multiple Key Signatures:** Practice in Major, Minor, Harmonic Minor, Melodic Minor, and other modes (Dorian, Mixolydian, etc.). Supports keys up to 6 sharps/flats.
+*   **Interactive Drills:**
+    *   **Chord Identification:** Identify chords displayed on the staff.
+    *   **Sight-Reading:** Play the notes of a chord on your MIDI keyboard.
+    *   **Melody & Intervals:** Train your ear and reading skills with melodic patterns and interval recognition.
+    *   **Speed Drills:** Challenge your reaction time.
+*   **Flexible Input Methods:**
+    *   **MIDI Keyboard:** Connect any MIDI-compatible device for the best experience.
+    *   **Microphone:** Use your acoustic piano (monophonic pitch detection supported).
+    *   **Text/UI:** Fallback options for use without an instrument.
+*   **Smart Voicings:** The drill engine ensures chords are generated with musically practical voicings and inversions.
 
-### **2.1 Navigation**
+### 🚀 Technical Highlights
+*   **Progressive Web App (PWA):** Installable on desktop and mobile, with offline support.
+*   **Audio Engine:** High-quality piano samples powered by Tone.js.
+*   **Notation:** Dynamic music notation rendering using VexFlow.
 
-* The app will be a single-page application (SPA).  
-* There will be no user login or saved progress. All content is available on load.  
-* The main navigation will allow the user to freely select between "Lesson Mode" and "Drill Mode" for any available module.
+## Installation & Usage
 
-### **2.2 Lesson Mode**
+### Prerequisites
+*   Node.js (v20 or higher recommended)
+*   npm
 
-* The user can select a content module (e.g., "C Major: Triads").  
-* The app will display a series of "flashcards" for the user to review.  
-* Each flashcard **must** display:  
-  1. **Chord Name:** e.g., "G Major" or "Am7"  
-  2. **Note Letters:** e.g., G - B - D  
-  3. **Staff Notation:** The chord's notes rendered on a musical staff.  
-  4. **Audio Button:** A "Play" button that plays the chord using the Web Audio API.
+### Local Development
 
-### **2.3 Drill Mode**
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/yourusername/piano-chord-trainer.git
+    cd piano-chord-trainer
+    ```
 
-* The user selects a module to be quizzed on (e.g., "C Major: Triads & 7th Chords").  
-* The app will generate a continuous stream of randomized quiz questions.  
-* The drill engine **must** randomize questions based on:  
-  * **Chord:** Any chord from the selected module (e.im., C, Dm, Em...).  
-  * **Inversion:** Root position, 1st inversion, 2nd inversion, etc.  
-  * **Clef:** Treble Clef or Bass Clef.  
-  * **Octave:** The chord may be rendered in different octaves on the staff.  
-* Two drill types will be available:  
-  * **2.3.1 Drill: Identification**  
-  * **App Shows:** A chord on the musical staff.  
-    * **User Action:** Selects the correct chord name from a multiple-choice list.  
-    * **Feedback:** Instant "Correct" or "Incorrect" visual feedback.  
-  * **2.3.2 Drill: Sight-Reading / Playing**  
-    * **App Shows:** A chord on the musical staff and/or its name (e.g., "Play G Major / B").  
-    * **User Action (Primary):** Play the correct notes on a connected MIDI keyboard.  
-    * **User Action (Fallback 1):** Type the note letters into a text input box (e.g., "G B D"). The app's parser must be able to handle enharmonic equivalents (e.g., "A#" vs. "Bb").  
-    * **User Action (Fallback 2):** Select the correct note letters (e.g., G - B - D) from a multiple-choice list that shows the correct answer and incorrect alternatives.  
-    * **Feedback:** Instant "Correct" or "Incorrect" visual feedback.
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
 
-### **2.4 Scoring & Feedback**
+3.  **Start the development server:**
+    ```bash
+    npm run dev
+    ```
+    Open your browser to the URL shown (usually `http://localhost:5173`).
 
-* The app will not save progress between sessions.  
-* During a drill session, the app will keep a simple score (e.g., "15 / 20 Correct").  
-* The user can reset this score at any time.
+## Deployment
 
-### **2.5 Audio**
+This project is configured for automatic deployment to **GitHub Pages**.
 
-* The app **must** produce sound.  
-* **Lesson Mode:** A "Play" button for each chord.  
-* **Drill Mode:**  
-  * A "Correct" sound effect (e.g., "ding").  
-  * An "Incorrect" sound effect (e.g., "buzz").
+### Setting up GitHub Pages
+1.  Go to your repository **Settings** on GitHub.
+2.  Navigate to **Pages** (in the sidebar).
+3.  Under **Build and deployment** > **Source**, select **GitHub Actions**.
+4.  The pre-configured workflow (`.github/workflows/deploy.yml`) will automatically build and deploy the application whenever you push to the `main` branch.
 
-## **3.0 Technical Requirements**
+## Technology Stack
 
-* **Platform:** Web Application (HTML, CSS, JavaScript).  
-* **Input (Primary):** Web MIDI API (to listen for MIDI keyboard input).  
-* **Input (Fallbacks):** Standard HTML <input type="text"> and multiple-choice UI elements.  
-* **Audio Output:** Web Audio API (for playing synthesized chord tones and sound effects).  
-* **Notation Rendering:** A JavaScript library will be used to render musical notation to a <canvas> or as SVG (e.g., VexFlow, ABC.js, or similar).
+*   **Framework:** Vanilla TypeScript with Vite
+*   **Audio:** Tone.js, Pitchy (Microphone Input)
+*   **Notation:** VexFlow
+*   **Input:** WebMIDI API
+*   **Testing:** Vitest, Playwright
 
-## **4.0 Content for Version 1.0**
+## Status
 
-The initial release will focus exclusively on the key of C Major.
-
-* **Module 1: C Major - Diatonic Triads**  
-  * **Lesson:** Covers the 7 triads: C (I), Dm (ii), Em (iii), F (IV), G (V), Am (vi), Bdim (vii°).  
-  * **Drill:** Quizzes all 7 triads and their inversions (root, 1st, 2nd).  
-* **Module 2: C Major - Diatonic 7th Chords**  
-  * **Lesson:** Covers the 7th chords: CMaj7, Dm7, Em7, FMaj7, G7, Am7, Bm7b5.  
-  * **Drill:** Quizzes all 7th chords and their inversions.
-
-## **5.0 Out of Scope (for V1.0)**
-
-* User accounts, login, or saving progress.  
-* Any keys other than C Major.  
-* "Unlocking" content; all modules are available from the start.  
-* Rhythmic exercises (this is purely a harmony/note trainer).  
-* A clickable on-screen virtual keyboard (deferring to text input as the fallback).
+**Alpha:** The application is functional but actively being improved. Some features (like polyphonic microphone input) may have limitations.
