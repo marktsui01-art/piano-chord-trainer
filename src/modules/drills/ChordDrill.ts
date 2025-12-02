@@ -1,6 +1,8 @@
-import { Chord, C_MAJOR_TRIADS, C_MAJOR_SEVENTHS, NoteName } from '../content';
+import { Chord, NoteName } from '../content';
 import { ChordModule } from '../state';
 import { DrillStrategy, DrillQuestion, DrillResult } from './DrillStrategy';
+import { KeyMode } from '../keys';
+import { generateDiatonicChords } from '../chords';
 
 export class ChordDrill implements DrillStrategy {
     public readonly isSequential = false;
@@ -12,11 +14,19 @@ export class ChordDrill implements DrillStrategy {
     private total: number = 0;
 
     private currentModule: ChordModule = 'triads';
+    private currentKeyId: string = 'C';
+    private currentMode: KeyMode = 'Major';
+
     public enableInversions: boolean = false;
     public enableWideRange: boolean = false;
 
     public setModule(module: ChordModule) {
         this.currentModule = module;
+    }
+
+    public setKeyContext(keyId: string, mode: KeyMode) {
+        this.currentKeyId = keyId;
+        this.currentMode = mode;
     }
 
     public setOptions(enableInversions: boolean, enableWideRange: boolean) {
@@ -26,18 +36,21 @@ export class ChordDrill implements DrillStrategy {
 
     public getQuestion(): DrillQuestion {
         // Select chords based on current module
-        let availableChords: Chord[] = [];
-        if (this.currentModule === 'triads') {
-            availableChords = C_MAJOR_TRIADS;
-        } else {
-            availableChords = C_MAJOR_SEVENTHS;
+        const type = this.currentModule === 'sevenths' ? 'sevenths' : 'triads';
+
+        let availableChords: Chord[] = generateDiatonicChords(this.currentKeyId, this.currentMode, type);
+
+        if (availableChords.length === 0) {
+            // Fallback (e.g. if key invalid)
+            // But generateDiatonicChords guarantees array return
+             return { name: "Invalid Key/Mode" };
         }
 
         // Avoid repeating the same question if possible
         let nextChord: Chord;
         do {
             nextChord = availableChords[Math.floor(Math.random() * availableChords.length)];
-        } while (availableChords.length > 1 && this.currentChord && nextChord === this.currentChord);
+        } while (availableChords.length > 1 && this.currentChord && nextChord.name === this.currentChord.name);
 
         this.currentChord = nextChord;
 
