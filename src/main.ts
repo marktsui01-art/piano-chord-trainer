@@ -109,6 +109,7 @@ app.innerHTML = `
           <div class="input-controls">
             <input type="text" id="text-input" placeholder="Type notes (e.g. C E G)" />
             <button id="btn-submit">Submit Answer</button>
+            <button id="btn-reveal" class="btn-secondary" style="margin-left: 0.5rem; display: none;">Reveal Answer</button>
           </div>
 
           <div class="virtual-piano-controls">
@@ -174,6 +175,7 @@ const feedbackEl = document.getElementById('feedback-text')!;
 const scoreEl = document.getElementById('score-display')!;
 const questionEl = document.getElementById('question-text')!;
 const textInput = document.getElementById('text-input') as HTMLInputElement;
+const btnReveal = document.getElementById('btn-reveal')!;
 const btnMic = document.getElementById('btn-mic')!;
 const detectedNotesEl = document.getElementById('detected-notes')!;
 
@@ -233,6 +235,13 @@ function updateUI(state: AppState) {
     // Re-render drill chord if switching to drill mode
     const chord = drillManager.getCurrentChord();
     if (chord) renderDrillChord();
+  }
+
+  // Show/Hide Reveal Button
+  if (['triads', 'sevenths'].includes(state.module)) {
+    btnReveal.style.display = 'inline-block';
+  } else {
+    btnReveal.style.display = 'none';
   }
 
   // Update Module Selector
@@ -519,6 +528,19 @@ const submitAnswer = () => {
 };
 
 document.getElementById('btn-submit')?.addEventListener('click', submitAnswer);
+
+btnReveal.addEventListener('click', () => {
+  const state = stateManager.getState();
+  // Only relevant for chord modules
+  if (['triads', 'sevenths'].includes(state.module)) {
+    const chord = drillManager.getCurrentChord();
+    if (chord) {
+      feedbackEl.textContent = `Answer: ${chord.notes.join(' - ')}`;
+      feedbackEl.style.color = '#2196F3'; // Blue
+      textInput.focus();
+    }
+  }
+});
 
 textInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
