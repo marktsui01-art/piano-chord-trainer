@@ -258,7 +258,7 @@ export function generatePattern(
     // Adjust length
     let length = 5;
     if (difficulty === 'intermediate') length = 8;
-    if (difficulty === 'advanced') length = 16;
+    if (difficulty === 'advanced') length = 8; // Capped to 8 notes as requested
 
     // --- Chromatic / Legacy Logic ---
     if (key.type === 'Chromatic') {

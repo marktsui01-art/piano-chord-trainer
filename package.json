@@ -11,6 +11,7 @@
     "format": "prettier --write \"src/**/*.{ts,css,html}\""
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "jsdom": "^23.0.0",
     "prettier": "^3.6.2",
     "typescript": "^5.2.2",
