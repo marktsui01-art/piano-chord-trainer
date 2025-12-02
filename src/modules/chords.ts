@@ -1,7 +1,5 @@
 import { Chord, NoteName } from './content';
-import { KeyMode, KeySignature, getKeyById, getScaleForKey, getModeRoot, NOTES_SHARP, NOTES_FLAT } from './keys';
-
-const CHROMATIC_SCALE = NOTES_SHARP; // For interval calculation logic, we can just use one list if we normalize
+import { KeyMode, getKeyById, getScaleForKey, getModeRoot, NOTES_SHARP, NOTES_FLAT } from './keys';
 
 function getChromaticIndex(note: NoteName): number {
     let idx = NOTES_SHARP.indexOf(note);
@@ -88,34 +86,34 @@ export function generateDiatonicChords(
             else if (rTo3 === 3 && rTo5 === 6 && rTo7 === 9) quality = 'Diminished'; // Full Diminished 7 (technically Diminished7 quality name collision with Triad, but content.ts has specific types?)
             else if (rTo3 === 3 && rTo5 === 7 && rTo7 === 11) quality = 'Minor7'; // Minor-Major 7 (not in types?)
             // Fallbacks for exotic chords in Harmonic Minor
-             else if (rTo3 === 3 && rTo5 === 7 && rTo7 === 11) {
-                 // Minor Major 7 - Content.ts does not have 'MinorMajor7'.
-                 // We might have to map it to something approximate or add it.
-                 // For now, let's look at Content.ts types:
-                 // 'Major' | 'Minor' | 'Diminished' | 'Augmented' | 'Major7' | 'Minor7' | 'Dominant7' | 'HalfDiminished7'
-                 // It misses 'MinorMajor7' and 'Diminished7' (full dim).
-                 // Let's coerce or just label logic:
-                 quality = 'Minor7'; // Imperfect fallback
-             }
-             else if (rTo3 === 4 && rTo5 === 8 && rTo7 === 11) {
-                 // Augmented Major 7
-                 quality = 'Major7';
-             }
-             else if (rTo3 === 3 && rTo5 === 6 && rTo7 === 9) {
-                 // Diminished 7 (Full)
-                 // content.ts has 'Diminished' but that usually implies triad.
-                 // Let's see... C_MAJOR_SEVENTHS only has diatonic C Major chords.
-                 // B Half-Diminished 7 is there.
-                 // We might need to extend Chord Quality types if we want to be precise for Harmonic Minor.
-                 // For now, I will use 'Diminished' assuming it can represent the 7th chord too, or 'HalfDiminished7' if appropriate.
-                 // Actually, let's map Full Diminished to 'Diminished' (as in triad) but keeping the 4 notes,
-                 // or technically we should update `content.ts`.
-                 // Given the constraint of not breaking things, I'll stick to 'Diminished' for the quality string,
-                 // as `Chord` interface just asks for a string literal.
-                 // Wait, `quality` IS typed.
-                 // I will map Full Diminished to 'Diminished' if allowed, otherwise 'HalfDiminished7' is wrong.
-                 quality = 'Diminished';
-             }
+            else if (rTo3 === 3 && rTo5 === 7 && rTo7 === 11) {
+                // Minor Major 7 - Content.ts does not have 'MinorMajor7'.
+                // We might have to map it to something approximate or add it.
+                // For now, let's look at Content.ts types:
+                // 'Major' | 'Minor' | 'Diminished' | 'Augmented' | 'Major7' | 'Minor7' | 'Dominant7' | 'HalfDiminished7'
+                // It misses 'MinorMajor7' and 'Diminished7' (full dim).
+                // Let's coerce or just label logic:
+                quality = 'Minor7'; // Imperfect fallback
+            }
+            else if (rTo3 === 4 && rTo5 === 8 && rTo7 === 11) {
+                // Augmented Major 7
+                quality = 'Major7';
+            }
+            else if (rTo3 === 3 && rTo5 === 6 && rTo7 === 9) {
+                // Diminished 7 (Full)
+                // content.ts has 'Diminished' but that usually implies triad.
+                // Let's see... C_MAJOR_SEVENTHS only has diatonic C Major chords.
+                // B Half-Diminished 7 is there.
+                // We might need to extend Chord Quality types if we want to be precise for Harmonic Minor.
+                // For now, I will use 'Diminished' assuming it can represent the 7th chord too, or 'HalfDiminished7' if appropriate.
+                // Actually, let's map Full Diminished to 'Diminished' (as in triad) but keeping the 4 notes,
+                // or technically we should update `content.ts`.
+                // Given the constraint of not breaking things, I'll stick to 'Diminished' for the quality string,
+                // as `Chord` interface just asks for a string literal.
+                // Wait, `quality` IS typed.
+                // I will map Full Diminished to 'Diminished' if allowed, otherwise 'HalfDiminished7' is wrong.
+                quality = 'Diminished';
+            }
         }
 
         // Construct Name
