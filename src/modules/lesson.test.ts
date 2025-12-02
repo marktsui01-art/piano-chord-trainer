@@ -7,18 +7,21 @@ describe('LessonManager', () => {
 
   beforeEach(() => {
     lessonManager = new LessonManager();
+    // Ensure default context matches the constants (C Major)
+    lessonManager.setKeyContext('C', 'Major');
   });
 
   describe('getCurrentChord', () => {
     it('should return the first triad by default', () => {
       const chord = lessonManager.getCurrentChord();
-      expect(chord).toBe(C_MAJOR_TRIADS[0]);
+      // Use toEqual for deep equality because objects are regenerated
+      expect(chord).toEqual(C_MAJOR_TRIADS[0]);
     });
 
     it('should return the first seventh chord when module is set to sevenths', () => {
       lessonManager.setModule('sevenths');
       const chord = lessonManager.getCurrentChord();
-      expect(chord).toBe(C_MAJOR_SEVENTHS[0]);
+      expect(chord).toEqual(C_MAJOR_SEVENTHS[0]);
     });
   });
 
@@ -26,7 +29,7 @@ describe('LessonManager', () => {
     it('should advance to the next chord', () => {
       lessonManager.next();
       const chord = lessonManager.getCurrentChord();
-      expect(chord).toBe(C_MAJOR_TRIADS[1]);
+      expect(chord).toEqual(C_MAJOR_TRIADS[1]);
     });
 
     it('should wrap around to the first chord after the last', () => {
@@ -35,7 +38,7 @@ describe('LessonManager', () => {
         lessonManager.next();
       }
       const chord = lessonManager.getCurrentChord();
-      expect(chord).toBe(C_MAJOR_TRIADS[0]);
+      expect(chord).toEqual(C_MAJOR_TRIADS[0]);
     });
   });
 
@@ -44,13 +47,13 @@ describe('LessonManager', () => {
       lessonManager.next();
       lessonManager.previous();
       const chord = lessonManager.getCurrentChord();
-      expect(chord).toBe(C_MAJOR_TRIADS[0]);
+      expect(chord).toEqual(C_MAJOR_TRIADS[0]);
     });
 
     it('should wrap around to the last chord when going back from the first', () => {
       lessonManager.previous();
       const chord = lessonManager.getCurrentChord();
-      expect(chord).toBe(C_MAJOR_TRIADS[C_MAJOR_TRIADS.length - 1]);
+      expect(chord).toEqual(C_MAJOR_TRIADS[C_MAJOR_TRIADS.length - 1]);
     });
   });
 
@@ -60,7 +63,7 @@ describe('LessonManager', () => {
       lessonManager.next();
       lessonManager.setModule('sevenths');
       const chord = lessonManager.getCurrentChord();
-      expect(chord).toBe(C_MAJOR_SEVENTHS[0]);
+      expect(chord).toEqual(C_MAJOR_SEVENTHS[0]);
     });
   });
 });
