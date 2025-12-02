@@ -499,14 +499,22 @@ document.getElementById('btn-next-drill')?.addEventListener('click', nextDrillQu
 const submitAnswer = () => {
   const text = textInput.value;
   const notes = inputManager.processTextInput(text);
-  handleDrillInput(notes);
+  const result = handleDrillInput(notes);
 
   // If incorrect via text submit, show feedback
-  const isCorrect = drillManager.checkAnswer(notes);
-  if (!isCorrect) {
-    feedbackEl.textContent = 'Try Again';
-    feedbackEl.style.color = '#f44336';
-    audioManager.playIncorrect();
+  // Note: handleDrillInput already calls checkAnswer internally.
+  // We should NOT call it again here, as that can cause state side effects (like skipping notes).
+  if (result === 'incorrect' || (result === null && notes.length > 0)) {
+    // Check if it's actually incorrect (handleDrillInput might return continue)
+    // Actually handleDrillInput returns the DrillResult.
+    // If it is 'incorrect', we show feedback.
+    // If it is 'continue', we don't show "Try Again".
+    // If it returned null (not in drill mode?), we ignore.
+    if (result === 'incorrect') {
+        feedbackEl.textContent = 'Try Again';
+        feedbackEl.style.color = '#f44336';
+        audioManager.playIncorrect();
+    }
   }
 };
 

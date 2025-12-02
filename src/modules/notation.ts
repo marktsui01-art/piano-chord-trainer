@@ -1,5 +1,48 @@
 import Vex from 'vexflow';
 
+// Helper to handle enharmonic spellings (internal note -> VexFlow key)
+// e.g. In Eb Minor, 'B' (from internal array) should be rendered as 'Cb'
+// In F# Major, 'F' should be 'E#'
+function getVexFlowKey(noteString: string, keySignature?: string): string {
+    if (!keySignature) return noteString;
+
+    // Split note and octave (e.g. "B/4")
+    const parts = noteString.split('/');
+    if (parts.length !== 2) return noteString;
+
+    let noteName = parts[0]; // "B", "F#", "Bb"
+    const octave = parseInt(parts[1]);
+
+    // Map based on Key Signature
+    // Ebm: Key Signature has 6 flats (Bb, Eb, Ab, Db, Gb, Cb)
+    // Internal notes use B instead of Cb
+    if (keySignature === 'Ebm' || keySignature === 'Gb' || keySignature === 'Cb') {
+        if (noteName === 'B') {
+            return `cb/${octave}`; // Cb is enharmonically B, but visual is C
+        }
+    }
+
+    // F# Major: Key Signature has 6 sharps (F#, C#, G#, D#, A#, E#)
+    // Internal notes use F instead of E#
+    // C# Major: 7 sharps (F#, C#, G#, D#, A#, E#, B#)
+    // Internal notes use C instead of B#
+    if (keySignature === 'F#' || keySignature === 'C#') {
+        if (noteName === 'F') {
+            return `e#/${octave}`;
+        }
+        if (keySignature === 'C#' && noteName === 'C') {
+             return `b#/${octave - 1}`; // B# is C. But wait, B#3 is C4? Yes. C4 -> B#3.
+             // This octave shift is tricky.
+             // If internal is C4. B#3 is the same pitch.
+             // If we just say "b#/4", that is a higher B#.
+             // Correct logic: C4 (MIDI 60) = B#3.
+        }
+    }
+
+    // Default: Return original
+    return noteString;
+}
+
 export class NotationRenderer {
   private divId: string;
   private renderer: any = null;
@@ -25,7 +68,9 @@ export class NotationRenderer {
     this.renderer = new VF.Renderer(div, VF.Renderer.Backends.SVG);
 
     // Resize based on length, add extra padding for key signature
-    const width = Math.max(300, notes.length * 50 + 150);
+    // Previous: Math.max(300, notes.length * 50 + 150);
+    // Fix: Increase multiplier and base padding to prevent cutoff
+    const width = Math.max(400, notes.length * 60 + 200);
     this.renderer.resize(width, 200);
     this.context = this.renderer.getContext();
 
@@ -40,42 +85,16 @@ export class NotationRenderer {
 
     if (notes.length === 0) return;
 
-    // Helper to check if a note is in the key signature
-    // This is tricky because VexFlow expects us to manage accidentals manually for StaveNotes,
-    // even if a Key Signature is present, *unless* we use the KeyManager (complex)
-    // OR we just manually check against the key spec.
-    // However, the standard VexFlow behavior is:
-    // If you add an Accidental modifier, it shows it.
-    // If you DON'T add an Accidental modifier, it doesn't show it.
-    // So, if we have a Key of G (F#), and the note is F#, we just pass "F#/4" to StaveNote
-    // and DO NOT add an accidental modifier. VexFlow will render the note head on the F line/space
-    // and the musician implies it's sharp because of the key sig.
-    //
-    // BUT: If the note is F (natural) in Key of G, we DO need a natural sign.
-    // AND: If the note is F# in Key of C, we DO need a sharp sign.
-
-    // SIMPLIFICATION:
-    // The requirement is "Strictly Diatonic".
-    // This means all notes passed in *should* match the key signature perfectly.
-    // Therefore, we should NEVER need to add accidental modifiers for these drills.
-    // We just need to make sure we don't accidentally add them based on the string name (e.g. 'F#').
-
     // Convert notes to VexFlow StaveNotes
     let staveNotes;
     let numBeats = 4;
 
     if (sequential) {
       staveNotes = notes.map((note, index) => {
-        // Note string format: "C#/4" or "C/4"
-        // VexFlow StaveNote keys argument expects "c/4", "c#/4", etc.
+        // Fix Enharmonic Spelling
+        const spelledNote = getVexFlowKey(note, keySignature);
 
-        // We strip the accidental from the key prop passed to StaveNote if we want to rely on Key Signature?
-        // No, VexFlow StaveNote needs to know the pitch class. "f#" means it sits on the F line/space.
-        // It does NOT automatically render the sharp symbol unless you addModifier.
-        // So "f#/4" without modifier = Note head on F line.
-        // If Key Sig has F#, then it is read as F#. Correct.
-
-        const staveNote = new VF.StaveNote({ clef: clef, keys: [note], duration: 'q' });
+        const staveNote = new VF.StaveNote({ clef: clef, keys: [spelledNote], duration: 'q' });
 
         // Logic for Accidentals:
         // Only add accidentals if NO key signature is provided (legacy mode or C Major explicit)
@@ -104,7 +123,11 @@ export class NotationRenderer {
       });
       numBeats = notes.length;
     } else {
-      const staveNote = new VF.StaveNote({ clef: clef, keys: notes, duration: 'w' });
+      // Non-sequential (Chords)
+      // Fix enharmonics for chord notes too
+      const spelledNotes = notes.map(n => getVexFlowKey(n, keySignature));
+
+      const staveNote = new VF.StaveNote({ clef: clef, keys: spelledNotes, duration: 'w' });
 
       // Add accidentals for chords only if no key signature
       if (!keySignature || keySignature === 'C' || keySignature === 'Am') {
