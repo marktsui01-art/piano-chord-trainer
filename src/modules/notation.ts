@@ -86,7 +86,7 @@ function getKeySignatureAccidentals(keySignature: string): Map<string, string> {
  * @param keySignature - The key signature (e.g., "Ebm")
  * @returns The accidental to display ('n' for natural, '#', 'b', or null if none needed)
  */
-function getRequiredAccidental(noteName: string, keySignature?: string): string | null {
+export function getRequiredAccidental(noteName: string, keySignature?: string): string | null {
   if (!keySignature) {
     // No key signature - show accidentals as written
     if (noteName.includes('#')) return '#';
