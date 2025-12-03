@@ -28,6 +28,66 @@ export const MELODIC_MINOR_INTERVALS = [0, 2, 3, 5, 7, 9, 11];
 // Helpers
 // ----------------------------------------
 
+export function getNoteIndex(note: string): number {
+    // Handle special enharmonic cases not in NoteName type
+    if (note === 'Cb') return 11;
+    if (note === 'E#') return 5;
+    if (note === 'Fb') return 4;
+    if (note === 'B#') return 0;
+
+    // Standard lookup
+    let index = NOTES_SHARP.indexOf(note as NoteName);
+    if (index !== -1) return index;
+    index = NOTES_FLAT.indexOf(note as NoteName);
+    return index;
+}
+
+export function areNotesEnharmonic(n1: string, n2: string): boolean {
+    if (n1 === n2) return true;
+    const i1 = getNoteIndex(n1);
+    const i2 = getNoteIndex(n2);
+    return i1 !== -1 && i1 === i2;
+}
+
+export function getDisplayNoteName(note: string, keyId: string, mode: KeyMode = 'Major'): string {
+    const key = getKeyById(keyId);
+    if (!key) return note;
+
+    const index = getNoteIndex(note);
+    if (index === -1) return note;
+
+    // Specific overrides for enharmonic correctness
+
+    // 1. Cb in Gb Major / Eb Minor
+    if ((key.id === 'Gb' || key.id === 'Ebm') && index === 11) {
+        return 'Cb';
+    }
+
+    // 2. E# in F# Major / D# Minor
+    if ((key.id === 'F#' || key.id === 'D#m') && index === 5) {
+        return 'E#';
+    }
+
+    // 3. Harmonic Minor specifics where accidental contradicts key signature
+    if (mode === 'Harmonic Minor' || mode === 'Melodic Minor') {
+         // D Minor (1 flat). Harmonic uses C# (index 1). Key uses Db (index 1).
+         if (key.id === 'Dm' && index === 1) return 'C#';
+
+         // G Minor (2 flats). Harmonic uses F# (index 6). Key uses Gb (index 6).
+         if (key.id === 'Gm' && index === 6) return 'F#';
+
+         // C# Minor (4 sharps). Harmonic uses B# (index 0).
+         if (key.id === 'C#m' && index === 0) return 'B#';
+    }
+
+    // Default to Key preference
+    if (key.accidentals >= 0) {
+        return NOTES_SHARP[index];
+    } else {
+        return NOTES_FLAT[index];
+    }
+}
+
 // Helper to generate major scale
 function getMajorScale(rootIndex: number, useSharps: boolean): NoteName[] {
     const chromatic = useSharps ? NOTES_SHARP : NOTES_FLAT;

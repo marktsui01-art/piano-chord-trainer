@@ -1,7 +1,7 @@
 import { Chord, NoteName } from '../content';
 import { ChordModule } from '../state';
 import { DrillStrategy, DrillQuestion, DrillResult } from './DrillStrategy';
-import { KeyMode } from '../keys';
+import { KeyMode, getNoteIndex } from '../keys';
 import { generateDiatonicChords } from '../chords';
 
 export class ChordDrill implements DrillStrategy {
@@ -126,13 +126,23 @@ export class ChordDrill implements DrillStrategy {
     public checkAnswer(inputNotes: NoteName[]): DrillResult {
         if (!this.currentChord) return 'incorrect';
 
-        const targetNotes = new Set(this.currentChord.notes);
-        const inputSet = new Set(inputNotes);
+        // Use index-based comparison for enharmonic equivalence
+        const uniqueInputIndices = new Set<number>();
+        inputNotes.forEach(n => {
+             const idx = getNoteIndex(n);
+             if (idx !== -1) uniqueInputIndices.add(idx);
+        });
 
-        if (targetNotes.size !== inputSet.size) return 'incorrect';
+        const uniqueTargetIndices = new Set<number>();
+        this.currentChord.notes.forEach(n => {
+             const idx = getNoteIndex(n);
+             if (idx !== -1) uniqueTargetIndices.add(idx);
+        });
 
-        for (let note of targetNotes) {
-            if (!inputSet.has(note)) return 'incorrect';
+        if (uniqueTargetIndices.size !== uniqueInputIndices.size) return 'incorrect';
+
+        for (let targetIndex of uniqueTargetIndices) {
+            if (!uniqueInputIndices.has(targetIndex)) return 'incorrect';
         }
 
         this.score++;

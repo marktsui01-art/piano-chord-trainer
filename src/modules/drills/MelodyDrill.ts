@@ -1,7 +1,7 @@
 import { NoteName } from '../content';
 import { DrillStrategy, DrillQuestion, DrillResult } from './DrillStrategy';
 import { generatePattern, Difficulty } from './patterns';
-import { KeyMode, getKeyById } from '../keys';
+import { KeyMode, getKeyById, areNotesEnharmonic } from '../keys';
 
 export class MelodyDrill implements DrillStrategy {
     public readonly isSequential = true;
@@ -63,9 +63,9 @@ export class MelodyDrill implements DrillStrategy {
 
             const target = this.sequence[this.currentIndex];
 
-            // Check if this note matches the current target
-            if (note === target.name) {
-                console.log(`[MelodyDrill] Match found: ${note}. Advancing index.`);
+            // Check if this note matches the current target (using enharmonic check)
+            if (areNotesEnharmonic(note, target.name)) {
+                console.log(`[MelodyDrill] Match found: ${note} (Target: ${target.name}). Advancing index.`);
                 this.currentIndex++;
                 advanced = true;
 

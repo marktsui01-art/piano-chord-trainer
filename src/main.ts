@@ -6,7 +6,7 @@ import { NotationRenderer } from './modules/notation';
 import { DrillManager } from './modules/drill';
 import { DrillResult } from './modules/drills/DrillStrategy';
 import { NoteName } from './modules/content';
-import { KEYS, KeyMode } from './modules/keys';
+import { KEYS, KeyMode, getDisplayNoteName } from './modules/keys';
 import { StateManager, AppState, ChordModule } from './modules/state';
 import { LessonManager } from './modules/lesson';
 import './pwa';
@@ -376,7 +376,9 @@ document.getElementById('btn-play-lesson')?.addEventListener('click', async () =
 // Initialize Input
 const inputManager = new InputManager((notes) => {
   // Update Input Monitor
-  detectedNotesEl.textContent = notes.join(' - ');
+  const state = stateManager.getState();
+  const displayNotes = notes.map(n => getDisplayNoteName(n, state.selectedKeyId, state.selectedMode));
+  detectedNotesEl.textContent = displayNotes.join(' - ');
 
   handleDrillInput(notes);
 });
