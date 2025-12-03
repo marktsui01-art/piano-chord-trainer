@@ -85,17 +85,14 @@ export class VirtualPiano {
     private updateKeyVisuals(note: NoteName) {
         if (!this.container) return;
 
-        // Find all keys representing this note (ignoring octave for visual feedback if we want generic feedback, 
-        // but here we might have multiple keys for same note name in different octaves. 
-        // The requirement says "allow answers as long as correct note is hit (disregarding octave)".
-        // However, for the PIANO UI, if I press C3, should C4 also light up? Probably not.
-        // But if I press C3, the input system receives "C".
-        // If I then press C4, the input system receives "C" again? 
-        // If we are using a Set<NoteName>, "C" is just "C".
-        // So if I press C3, "C" is active. If I press C4, "C" is still active.
-        // So visually, ALL "C" keys should probably reflect the state of "C".
+        // Map enharmonics for visual selection
+        let targetNote = note;
+        if (note === 'Cb') targetNote = 'B';
+        else if (note === 'B#') targetNote = 'C';
+        else if (note === 'Fb') targetNote = 'E';
+        else if (note === 'E#') targetNote = 'F';
 
-        const keys = this.container.querySelectorAll(`[data-note="${note}"]`);
+        const keys = this.container.querySelectorAll(`[data-note="${targetNote}"]`);
         const isActive = this.activeNotes.has(note);
 
         keys.forEach(k => {
@@ -117,7 +114,14 @@ export class VirtualPiano {
 
     public highlightNote(note: NoteName, type: 'correct' | 'incorrect') {
         if (!this.container) return;
-        const keys = this.container.querySelectorAll(`[data-note="${note}"]`);
+
+        let targetNote = note;
+        if (note === 'Cb') targetNote = 'B';
+        else if (note === 'B#') targetNote = 'C';
+        else if (note === 'Fb') targetNote = 'E';
+        else if (note === 'E#') targetNote = 'F';
+
+        const keys = this.container.querySelectorAll(`[data-note="${targetNote}"]`);
         keys.forEach(k => {
             k.classList.remove('correct', 'incorrect');
             k.classList.add(type);

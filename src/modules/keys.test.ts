@@ -1,49 +1,41 @@
-
 import { describe, it, expect } from 'vitest';
-import { getKeyById, getModeRoot } from './keys';
+import { getKeyRootById, getModeRoot, getScaleForKey } from './keys';
 
 describe('Keys Module', () => {
-    it('should return correct root for Major Key + Major Mode', () => {
-        const key = getKeyById('C'); // C Major
+    it('should retrieve key roots correctly', () => {
+        const key = getKeyRootById('C');
         expect(key).toBeDefined();
-        if (!key) return;
+        expect(key?.root).toBe('C');
 
-        const root = getModeRoot(key, 'Major');
-        expect(root).toBe('C');
+        const keyEb = getKeyRootById('Eb');
+        expect(keyEb?.root).toBe('Eb');
     });
 
-    it('should return correct root for Major Key + Minor Mode (Relative Minor)', () => {
-        const key = getKeyById('C'); // C Major
-        expect(key).toBeDefined();
-        if (!key) return;
-
-        const root = getModeRoot(key, 'Minor');
-        expect(root).toBe('A'); // Relative minor of C is A
+    it('should return correct scale for C Major', () => {
+        const scale = getScaleForKey('C', 'Major');
+        expect(scale).toEqual(['C', 'D', 'E', 'F', 'G', 'A', 'B']);
     });
 
-    it('should return correct root for Minor Key + Minor Mode', () => {
-        const key = getKeyById('Am'); // A Minor
-        expect(key).toBeDefined();
-        if (!key) return;
-
-        const root = getModeRoot(key, 'Minor');
-        expect(root).toBe('A');
+    it('should return correct scale for A Minor', () => {
+        const scale = getScaleForKey('A', 'Minor');
+        expect(scale).toEqual(['A', 'B', 'C', 'D', 'E', 'F', 'G']);
     });
 
-    it('should return correct root for Minor Key + Major Mode (Relative Major)', () => {
-        const key = getKeyById('Am'); // A Minor
-        expect(key).toBeDefined();
-        if (!key) return;
+    it('should return correct scale for Eb Minor', () => {
+        const scale = getScaleForKey('Eb', 'Minor');
+        // Eb Minor: Eb F Gb Ab Bb Cb Db
+        // Note: Cb is now supported
+        expect(scale).toEqual(['Eb', 'F', 'Gb', 'Ab', 'Bb', 'Cb', 'Db']);
+    });
 
-        // If I select Am, and then Major Mode, I expect C (Relative Major)
-        // OR maybe it's invalid? But let's see what it returns.
-        const root = getModeRoot(key, 'Major');
+    it('should return correct scale for C Harmonic Minor', () => {
+        const scale = getScaleForKey('C', 'Harmonic Minor');
+        // C D Eb F G Ab B
+        expect(scale).toEqual(['C', 'D', 'Eb', 'F', 'G', 'Ab', 'B']);
+    });
 
-        // Current implementation likely returns A (scale[0]), which is wrong if we want Relative Major (C)
-        // If we want Parallel Major (A Major), that's a different key signature entirely.
-        // Assuming the intent is Relative Modes:
-        // Am Scale: A B C D E F G
-        // Major (Ionian) is C.
-        expect(root).toBe('C');
+    it('getModeRoot should simply return the root', () => {
+        expect(getModeRoot('C', 'Major')).toBe('C');
+        expect(getModeRoot('A', 'Minor')).toBe('A');
     });
 });

@@ -24,8 +24,7 @@ describe('Chord Generator', () => {
         // Eb Minor Natural: Eb F Gb Ab Bb Cb Db
         // i: Eb Gb Bb (Eb m)
         // V: Bb Db F (Bb m)
-        // Note: Key ID for Eb Minor is 'Ebm', not 'Eb' (which is Eb Major)
-        const chords = generateDiatonicChords('Ebm', 'Minor', 'triads');
+        const chords = generateDiatonicChords('Eb', 'Minor', 'triads');
 
         expect(chords[0].root).toBe('Eb');
         expect(chords[0].quality).toBe('Minor');
@@ -40,7 +39,7 @@ describe('Chord Generator', () => {
         // Eb Harmonic Minor: Eb F Gb Ab Bb Cb D (Raised 7th is D natural)
         // i: Eb Gb Bb (Eb m)
         // V: Bb D F (Bb Major)
-        const chords = generateDiatonicChords('Ebm', 'Harmonic Minor', 'triads');
+        const chords = generateDiatonicChords('Eb', 'Harmonic Minor', 'triads');
 
         // i
         expect(chords[0].root).toBe('Eb');
@@ -54,7 +53,7 @@ describe('Chord Generator', () => {
 
     it('generates Eb Harmonic Minor Sevenths', () => {
         // V7 should be Bb Dominant 7 (Bb D F Ab)
-        const chords = generateDiatonicChords('Ebm', 'Harmonic Minor', 'sevenths');
+        const chords = generateDiatonicChords('Eb', 'Harmonic Minor', 'sevenths');
 
         expect(chords[4].root).toBe('Bb');
         expect(chords[4].quality).toBe('Dominant7');

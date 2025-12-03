@@ -38,9 +38,9 @@ export class LessonManager {
 
     // Fallback if empty (shouldn't happen with valid keys)
     if (this.chords.length === 0) {
-        // Fallback to C Major just to show something? Or keep empty?
-        // Let's keep empty or handle gracefully.
-        // Actually generateDiatonicChords returns empty on invalid key.
+      // Fallback to C Major just to show something? Or keep empty?
+      // Let's keep empty or handle gracefully.
+      // Actually generateDiatonicChords returns empty on invalid key.
     }
   }
 

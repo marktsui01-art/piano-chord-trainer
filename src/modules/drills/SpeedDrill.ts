@@ -1,6 +1,6 @@
 import { NoteName } from '../content';
 import { DrillStrategy, DrillQuestion, DrillResult } from './DrillStrategy';
-import { getKeyById, KeyMode } from '../keys';
+import { KeyMode, getScaleForKey, isEnharmonicMatch } from '../keys';
 
 interface SpeedNote {
     name: NoteName;
@@ -13,18 +13,22 @@ export class SpeedDrill implements DrillStrategy {
     private score: number = 0;
     private total: number = 0;
     private currentKeyId: string = 'C';
+    private currentMode: KeyMode = 'Major';
 
-    public setKeyContext(keyId: string, _mode: KeyMode) {
+    public setKeyContext(keyId: string, mode: KeyMode) {
         this.currentKeyId = keyId;
+        this.currentMode = mode;
     }
 
     public getQuestion(): DrillQuestion {
         // Generate random note WITHIN the key
-        const key = getKeyById(this.currentKeyId);
-        const scale = key ? key.scale : ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as NoteName[];
+        const scale = getScaleForKey(this.currentKeyId, this.currentMode);
+
+        // Fallback if scale empty
+        const effectiveScale = scale.length > 0 ? scale : ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as NoteName[];
 
         // Pick random note from scale
-        const name = scale[Math.floor(Math.random() * scale.length)];
+        const name = effectiveScale[Math.floor(Math.random() * effectiveScale.length)];
 
         // Octave 3, 4, 5
         const octave = 3 + Math.floor(Math.random() * 3);
@@ -33,16 +37,34 @@ export class SpeedDrill implements DrillStrategy {
         return { name: `Note: ${name}` };
     }
 
-    public checkAnswer(input: NoteName[]): DrillResult {
-        if (!this.currentNote) return 'incorrect';
-        // Check if input contains the target note name (Pitch Class match)
-        const correct = input.includes(this.currentNote.name);
+    public getVexFlowNotes(_baseOctave: number): string[] {
+        if (!this.currentNote) return [];
+        return [`${this.currentNote.name}/${this.currentNote.octave}`];
+    }
+
+    public getPlaybackNotes(_baseOctave: number): string[] {
+        if (!this.currentNote) return [];
+        return [`${this.currentNote.name}${this.currentNote.octave}`];
+    }
+
+    public checkAnswer(inputNotes: NoteName[]): DrillResult {
+        if (!this.currentNote) return null;
+
+        // Check if the correct note is held
+        const correct = inputNotes.some(n => isEnharmonicMatch(n, this.currentNote!.name));
+
         if (correct) {
             this.score++;
             this.total++;
             return 'correct';
         }
-        return 'incorrect';
+
+        // If any note is pressed but it's wrong
+        if (inputNotes.length > 0) {
+            return 'incorrect';
+        }
+
+        return null;
     }
 
     public getScore(): string {
@@ -52,16 +74,5 @@ export class SpeedDrill implements DrillStrategy {
     public resetScore() {
         this.score = 0;
         this.total = 0;
-    }
-
-    public getVexFlowNotes(_baseOctave: number): string[] {
-        if (!this.currentNote) return [];
-        // Ignore baseOctave, use note's specific octave
-        return [`${this.currentNote.name}/${this.currentNote.octave}`];
-    }
-
-    public getPlaybackNotes(_baseOctave: number): string[] {
-        if (!this.currentNote) return [];
-        return [`${this.currentNote.name}${this.currentNote.octave}`];
     }
 }

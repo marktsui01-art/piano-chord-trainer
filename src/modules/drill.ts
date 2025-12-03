@@ -36,18 +36,26 @@ export class DrillManager {
     this.strategy.resetScore();
   }
 
+  public setStrategy(strategyName: 'chord' | 'melody' | 'speed' | 'interval') {
+    switch (strategyName) {
+      case 'melody': this.strategy = this.melodyDrill; break;
+      case 'speed': this.strategy = this.speedDrill; break;
+      case 'interval': this.strategy = this.intervalDrill; break;
+      case 'chord':
+      default:
+        this.strategy = this.chordDrill; break;
+    }
+    this.strategy.resetScore();
+  }
+
   public setOptions(enableInversions: boolean, enableWideRange: boolean) {
     this.chordDrill.setOptions(enableInversions, enableWideRange);
   }
 
   public getQuestion(keyId: string = 'C', mode: KeyMode = 'Major'): DrillQuestion {
     // Pass key context to strategy if supported
-    console.log(`[DrillManager] getQuestion called with Key: ${keyId}, Mode: ${mode}`);
     if (this.strategy.setKeyContext) {
-        console.log(`[DrillManager] Setting key context on strategy`);
-        this.strategy.setKeyContext(keyId, mode);
-    } else {
-        console.log(`[DrillManager] Strategy does not support setKeyContext`);
+      this.strategy.setKeyContext(keyId, mode);
     }
     return this.strategy.getQuestion();
   }

@@ -1,5 +1,5 @@
 import { NoteName } from '../content';
-import { KeySignature, KeyMode, getScaleForKey, getModeRoot, getKeyById } from '../keys';
+import { KeyMode, getScaleForKey } from '../keys';
 
 export type PatternType = 'scale' | 'arpeggio' | 'interval' | 'stepwise' | 'random';
 export type Difficulty = 'beginner' | 'intermediate' | 'advanced';
@@ -122,14 +122,14 @@ function generateChromaticArpeggioPattern(
 // --- Diatonic Generators ---
 
 function generateScalePattern(
-    key: KeySignature,
+    root: string,
     mode: KeyMode,
     length: number,
     ascending: boolean = true
 ): MelodicPattern {
-    const scale = getScaleForKey(key, mode);
-    const rootNote = getModeRoot(key, mode);
-    let startIndex = scale.indexOf(rootNote);
+    const scale = getScaleForKey(root, mode);
+    // In new logic, scale[0] IS the root note
+    const startIndex = 0;
     const rootOctave = 4;
     const notes: { name: NoteName; octave: number }[] = [];
 
@@ -138,17 +138,16 @@ function generateScalePattern(
         notes.push(getNoteFromScale(scale, noteIndex, rootOctave));
     }
     if (!ascending) notes.reverse();
-    return { notes, name: `${rootNote} ${mode} Scale`, type: 'scale' };
+    return { notes, name: `${root} ${mode} Scale`, type: 'scale' };
 }
 
 function generateArpeggioPattern(
-    key: KeySignature,
+    root: string,
     mode: KeyMode,
     length: number
 ): MelodicPattern {
-    const scale = getScaleForKey(key, mode);
-    const rootNote = getModeRoot(key, mode);
-    const startIndex = scale.indexOf(rootNote);
+    const scale = getScaleForKey(root, mode);
+    const startIndex = 0;
     const rootOctave = 4;
 
     // Use Diatonic Steps constant
@@ -160,18 +159,17 @@ function generateArpeggioPattern(
         const noteIndex = startIndex + currentStep;
         notes.push(getNoteFromScale(scale, noteIndex, rootOctave));
     }
-    return { notes, name: `${rootNote} ${mode} Arpeggio`, type: 'arpeggio' };
+    return { notes, name: `${root} ${mode} Arpeggio`, type: 'arpeggio' };
 }
 
 function generateIntervalPattern(
-    key: KeySignature,
+    root: string,
     mode: KeyMode,
     length: number,
     intervalStep: number
 ): MelodicPattern {
-    const scale = getScaleForKey(key, mode);
-    const rootNote = getModeRoot(key, mode);
-    const startIndex = scale.indexOf(rootNote);
+    const scale = getScaleForKey(root, mode);
+    const startIndex = 0;
     const rootOctave = 4;
     const notes: { name: NoteName; octave: number }[] = [];
 
@@ -190,19 +188,18 @@ function generateIntervalPattern(
 
     return {
         notes,
-        name: `${rootNote} ${mode} Broken ${intervalNames[intervalStep] || 'Intervals'}`,
+        name: `${root} ${mode} Broken ${intervalNames[intervalStep] || 'Intervals'}`,
         type: 'interval'
     };
 }
 
 function generateStepwisePattern(
-    key: KeySignature,
+    root: string,
     mode: KeyMode,
     length: number
 ): MelodicPattern {
-    const scale = getScaleForKey(key, mode);
-    const rootNote = getModeRoot(key, mode);
-    const startIndex = scale.indexOf(rootNote);
+    const scale = getScaleForKey(root, mode);
+    const startIndex = 0;
     const rootOctave = 4;
     const relativeSteps = [0, 1, 2, 1, 0, -1, 0, 1];
     const notes: { name: NoteName; octave: number }[] = [];
@@ -212,17 +209,16 @@ function generateStepwisePattern(
         const noteIndex = startIndex + step;
         notes.push(getNoteFromScale(scale, noteIndex, rootOctave));
     }
-    return { notes, name: `${rootNote} ${mode} Stepwise`, type: 'stepwise' };
+    return { notes, name: `${root} ${mode} Stepwise`, type: 'stepwise' };
 }
 
 function generateRandomMelody(
-    key: KeySignature,
+    root: string,
     mode: KeyMode,
     length: number
 ): MelodicPattern {
-    const scale = getScaleForKey(key, mode);
-    const rootNote = getModeRoot(key, mode);
-    const startIndex = scale.indexOf(rootNote);
+    const scale = getScaleForKey(root, mode);
+    const startIndex = 0;
     const rootOctave = 4;
     const startDegrees = [0, 2, 4];
     let currentScaleDegree = startIndex + startDegrees[Math.floor(Math.random() * startDegrees.length)];
@@ -248,22 +244,19 @@ function generateRandomMelody(
 }
 
 export function generatePattern(
-    keyId: string,
+    root: string,
     mode: KeyMode,
     difficulty: Difficulty = 'beginner'
 ): MelodicPattern {
-    const key = getKeyById(keyId);
-    if (!key) throw new Error(`Invalid key: ${keyId}`);
-
     // Adjust length
     let length = 5;
     if (difficulty === 'intermediate') length = 8;
     if (difficulty === 'advanced') length = 8; // Capped to 8 notes as requested
 
     // --- Chromatic / Legacy Logic ---
-    if (key.type === 'Chromatic') {
+    if (mode === 'Chromatic') {
         const roots: NoteName[] = ['C', 'D', 'E', 'F', 'G'];
-        const root = roots[Math.floor(Math.random() * roots.length)];
+        const randomRoot = roots[Math.floor(Math.random() * roots.length)];
         const rootOctave = 4;
 
         // Randomly pick legacy pattern types
@@ -271,30 +264,30 @@ export function generatePattern(
         if (r < 0.4) {
             // Intervals (e.g. Major 3rds, 4ths)
             const interval = [4, 5, 7][Math.floor(Math.random() * 3)];
-            return generateChromaticIntervalPattern(root, rootOctave, interval, length);
+            return generateChromaticIntervalPattern(randomRoot, rootOctave, interval, length);
         } else if (r < 0.7) {
             // Arpeggios (restored)
-            return generateChromaticArpeggioPattern(root, rootOctave, 'major', length);
+            return generateChromaticArpeggioPattern(randomRoot, rootOctave, 'major', length);
         } else {
             // Stepwise
-            return generateChromaticStepwisePattern(root, rootOctave, length);
+            return generateChromaticStepwisePattern(randomRoot, rootOctave, length);
         }
     }
 
     // --- Diatonic Logic ---
     const r = Math.random();
     if (r < 0.3) {
-        return generateRandomMelody(key, mode, length);
+        return generateRandomMelody(root, mode, length);
     } else if (r < 0.5) {
-        return generateScalePattern(key, mode, length, Math.random() > 0.5);
+        return generateScalePattern(root, mode, length, Math.random() > 0.5);
     } else if (r < 0.7) {
-        return generateArpeggioPattern(key, mode, length);
+        return generateArpeggioPattern(root, mode, length);
     } else if (r < 0.85) {
         // Random diatonic interval step (3rds, 4ths, 5ths)
         // 2=3rd, 3=4th, 4=5th
         const intervalStep = 2 + Math.floor(Math.random() * 3);
-        return generateIntervalPattern(key, mode, Math.max(3, Math.floor(length / 2)), intervalStep);
+        return generateIntervalPattern(root, mode, Math.max(3, Math.floor(length / 2)), intervalStep);
     } else {
-        return generateStepwisePattern(key, mode, length);
+        return generateStepwisePattern(root, mode, length);
     }
 }

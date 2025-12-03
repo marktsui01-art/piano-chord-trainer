@@ -119,41 +119,33 @@ export class InputManager {
   public processTextInput(text: string): NoteName[] {
     const cleanText = text.toUpperCase();
     // Match note names: A-G followed optionally by # or B (flat)
-    const matches = cleanText.match(/[A-G][#B]?/g);
+    // Updated regex to include Cb, B#, E#, Fb
+    // Actually our NoteName type includes these now, but we need to parse them.
+    // Simple regex for A-G followed by optional # or b.
+    const matches = cleanText.match(/[A-G][#b]?/gi);
 
     if (!matches) return [];
 
     const notes: NoteName[] = [];
-    const validNoteNames = new Set<string>([
-      'C',
-      'C#',
-      'Db',
-      'D',
-      'D#',
-      'Eb',
-      'E',
-      'F',
-      'F#',
-      'Gb',
-      'G',
-      'G#',
-      'Ab',
-      'A',
-      'A#',
-      'Bb',
-      'B',
-    ]);
+    // We need to validate against our allowed NoteNames.
+    // Since we added Cb, B#, E#, Fb, we should check if they are valid.
+
+    // Let's rely on the fact that our NoteName type is string union.
+    // We can just cast if it looks like a note, but better to validate.
+
+    // For simplicity, let's just pass through anything that looks like a note
+    // and let the downstream logic handle it (or filter by valid NoteNames).
 
     matches.forEach((m) => {
-      let note = m;
-      // Normalize flats: "EB" -> "Eb"
-      if (note.length === 2 && note[1] === 'B') {
-        note = note[0] + 'b';
+      // Normalize case: "Eb"
+      let note = m.charAt(0).toUpperCase();
+      if (m.length > 1) {
+        note += m.charAt(1).toLowerCase(); // "b" or "#" (though # is usually same case)
+        // Actually usually # is kept as #.
+        if (m.charAt(1) === '#') note = m.charAt(0).toUpperCase() + '#';
       }
 
-      if (validNoteNames.has(note)) {
-        notes.push(note as NoteName);
-      }
+      notes.push(note as NoteName);
     });
 
     return notes;
@@ -172,6 +164,16 @@ export class InputManager {
     } else {
       this.activeNotes.delete(note);
     }
+    this.emitNotes();
+  }
+
+  public handleNoteOn(note: NoteName) {
+    this.activeNotes.add(note);
+    this.emitNotes();
+  }
+
+  public handleNoteOff(note: NoteName) {
+    this.activeNotes.delete(note);
     this.emitNotes();
   }
 

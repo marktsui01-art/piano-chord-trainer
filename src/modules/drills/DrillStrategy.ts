@@ -1,7 +1,7 @@
 import { NoteName } from '../content';
 import { KeyMode } from '../keys';
 
-export type DrillResult = 'correct' | 'incorrect' | 'continue';
+export type DrillResult = 'correct' | 'incorrect' | 'continue' | null;
 
 export interface DrillQuestion {
     name: string;

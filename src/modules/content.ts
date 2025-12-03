@@ -15,7 +15,11 @@ export type NoteName =
   | 'A'
   | 'A#'
   | 'Bb'
-  | 'B';
+  | 'B'
+  | 'Cb'
+  | 'B#'
+  | 'E#'
+  | 'Fb';
 
 export interface Note {
   name: NoteName;
@@ -26,14 +30,14 @@ export interface Chord {
   name: string;
   root: NoteName;
   quality:
-    | 'Major'
-    | 'Minor'
-    | 'Diminished'
-    | 'Augmented'
-    | 'Major7'
-    | 'Minor7'
-    | 'Dominant7'
-    | 'HalfDiminished7';
+  | 'Major'
+  | 'Minor'
+  | 'Diminished'
+  | 'Augmented'
+  | 'Major7'
+  | 'Minor7'
+  | 'Dominant7'
+  | 'HalfDiminished7';
   notes: NoteName[]; // Root position notes (no octave)
 }
 

@@ -71,13 +71,37 @@ export class AudioManager {
       return;
     }
     // Use specified octave
-    const fullNotes = notes.map((n) => n + octave);
+    const fullNotes = notes.map((n) => {
+      if (n === 'Cb') return 'B' + (octave - 1);
+      if (n === 'B#') return 'C' + (octave + 1);
+      if (n === 'Fb') return 'E' + octave;
+      if (n === 'E#') return 'F' + octave;
+      return n + octave;
+    });
     this.sampler.triggerAttackRelease(fullNotes, duration);
   }
 
   public playNotes(notes: string[], duration: string = '8n') {
     if (!this.isLoaded) return;
-    this.sampler.triggerAttackRelease(notes, duration);
+
+    // Handle enharmonics in note strings (e.g. "Cb4" -> "B3")
+    const mappedNotes = notes.map(note => {
+      const match = note.match(/^([A-G][#b]?)(.*)$/);
+      if (!match) return note;
+
+      const name = match[1];
+      const octStr = match[2];
+      const oct = parseInt(octStr);
+
+      if (name === 'Cb') return 'B' + (oct - 1);
+      if (name === 'B#') return 'C' + (oct + 1);
+      if (name === 'Fb') return 'E' + oct;
+      if (name === 'E#') return 'F' + oct;
+
+      return note;
+    });
+
+    this.sampler.triggerAttackRelease(mappedNotes, duration);
   }
 
   public playCorrect() {

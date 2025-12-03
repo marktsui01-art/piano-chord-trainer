@@ -6,7 +6,7 @@ import { NotationRenderer } from './modules/notation';
 import { DrillManager } from './modules/drill';
 import { DrillResult } from './modules/drills/DrillStrategy';
 import { NoteName } from './modules/content';
-import { KEYS, KeyMode, getDisplayNoteName } from './modules/keys';
+import { ALL_ROOTS, KeyMode } from './modules/keys';
 import { StateManager, AppState, ChordModule } from './modules/state';
 import { LessonManager } from './modules/lesson';
 import './pwa';
@@ -179,13 +179,12 @@ const btnReveal = document.getElementById('btn-reveal')!;
 const btnMic = document.getElementById('btn-mic')!;
 const detectedNotesEl = document.getElementById('detected-notes')!;
 
-// Populate Key Select (Safe sort)
-const sortedKeys = [...KEYS].sort((a, b) => a.difficulty - b.difficulty);
-sortedKeys.forEach(k => {
-    const opt = document.createElement('option');
-    opt.value = k.id;
-    opt.text = `${k.root} ${k.type} (Level ${k.difficulty})`;
-    keySelect.add(opt);
+// Populate Key Select with root notes only
+ALL_ROOTS.forEach(k => {
+  const opt = document.createElement('option');
+  opt.value = k.id;
+  opt.text = k.id;
+  keySelect.add(opt);
 });
 
 // --- State Management ---
@@ -209,9 +208,9 @@ function updateUI(state: AppState) {
     // Show mode selector if module is triads or sevenths, or melody
     // Actually, for Chords (triads/sevenths) we also want to support Mode selection now (e.g. Harmonic Minor)
     if (['triads', 'sevenths', 'melody'].includes(state.module)) {
-         modeSelectContainer.style.display = 'inline-block';
+      modeSelectContainer.style.display = 'inline-block';
     } else {
-         modeSelectContainer.style.display = 'none';
+      modeSelectContainer.style.display = 'none';
     }
 
     renderLesson();
@@ -227,9 +226,9 @@ function updateUI(state: AppState) {
     keySettings.style.display = 'block';
 
     if (['triads', 'sevenths', 'melody'].includes(state.module)) {
-        modeSelectContainer.style.display = 'inline-block';
+      modeSelectContainer.style.display = 'inline-block';
     } else {
-        modeSelectContainer.style.display = 'none';
+      modeSelectContainer.style.display = 'none';
     }
 
     // Re-render drill chord if switching to drill mode
@@ -272,31 +271,31 @@ moduleSelect.addEventListener('change', (e) => {
 });
 
 keySelect.addEventListener('change', (e) => {
-    const keyId = (e.target as HTMLSelectElement).value;
-    stateManager.setKey(keyId);
+  const keyId = (e.target as HTMLSelectElement).value;
+  stateManager.setKey(keyId);
 
-    const state = stateManager.getState();
-    lessonManager.setKeyContext(keyId, state.selectedMode);
+  const state = stateManager.getState();
+  lessonManager.setKeyContext(keyId, state.selectedMode);
 
-    if (state.mode === 'drill') {
-        nextDrillQuestion();
-    } else {
-        renderLesson();
-    }
+  if (state.mode === 'drill') {
+    nextDrillQuestion();
+  } else {
+    renderLesson();
+  }
 });
 
 modeSelect.addEventListener('change', (e) => {
-    const mode = (e.target as HTMLSelectElement).value as KeyMode;
-    stateManager.setKeyMode(mode);
+  const mode = (e.target as HTMLSelectElement).value as KeyMode;
+  stateManager.setKeyMode(mode);
 
-    const state = stateManager.getState();
-    lessonManager.setKeyContext(state.selectedKeyId, mode);
+  const state = stateManager.getState();
+  lessonManager.setKeyContext(state.selectedKeyId, mode);
 
-    if (state.mode === 'drill') {
-        nextDrillQuestion();
-    } else {
-        renderLesson();
-    }
+  if (state.mode === 'drill') {
+    nextDrillQuestion();
+  } else {
+    renderLesson();
+  }
 });
 
 clefSelect.addEventListener('change', () => {
@@ -333,10 +332,10 @@ function getCurrentOctave(): number {
 function renderLesson() {
   const chord = lessonManager.getCurrentChord();
   if (!chord) {
-      lessonNameEl.textContent = "No Chords Available";
-      lessonNotesEl.textContent = "";
-      lessonNotation.render([], clefSelect.value as any);
-      return;
+    lessonNameEl.textContent = "No Chords Available";
+    lessonNotesEl.textContent = "";
+    lessonNotation.render([], clefSelect.value as any);
+    return;
   }
 
   lessonNameEl.textContent = chord.name;
@@ -376,9 +375,7 @@ document.getElementById('btn-play-lesson')?.addEventListener('click', async () =
 // Initialize Input
 const inputManager = new InputManager((notes) => {
   // Update Input Monitor
-  const state = stateManager.getState();
-  const displayNotes = notes.map(n => getDisplayNoteName(n, state.selectedKeyId, state.selectedMode));
-  detectedNotesEl.textContent = displayNotes.join(' - ');
+  detectedNotesEl.textContent = notes.join(' - ');
 
   handleDrillInput(notes);
 });
@@ -522,9 +519,9 @@ const submitAnswer = () => {
     // If it is 'continue', we don't show "Try Again".
     // If it returned null (not in drill mode?), we ignore.
     if (result === 'incorrect') {
-        feedbackEl.textContent = 'Try Again';
-        feedbackEl.style.color = '#f44336';
-        audioManager.playIncorrect();
+      feedbackEl.textContent = 'Try Again';
+      feedbackEl.style.color = '#f44336';
+      audioManager.playIncorrect();
     }
   }
 };
