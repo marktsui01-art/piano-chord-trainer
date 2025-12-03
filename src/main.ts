@@ -276,6 +276,7 @@ keySelect.addEventListener('change', (e) => {
 
   const state = stateManager.getState();
   lessonManager.setKeyContext(keyId, state.selectedMode);
+  virtualPiano.setKeyContext(keyId, state.selectedMode);
 
   if (state.mode === 'drill') {
     nextDrillQuestion();
@@ -290,6 +291,7 @@ modeSelect.addEventListener('change', (e) => {
 
   const state = stateManager.getState();
   lessonManager.setKeyContext(state.selectedKeyId, mode);
+  virtualPiano.setKeyContext(state.selectedKeyId, mode);
 
   if (state.mode === 'drill') {
     nextDrillQuestion();
@@ -346,8 +348,13 @@ function renderLesson() {
   const vexNotes = chord.notes.map((n) => `${n}/${octave}`);
 
   const state = stateManager.getState();
-  // Pass key signature to renderer
-  lessonNotation.render(vexNotes, clef, false, 0, state.selectedKeyId);
+  // Construct VexFlow key signature (e.g., "Eb" for Eb Major, "Ebm" for Eb Minor)
+  let keySig = state.selectedKeyId;
+  if (state.selectedMode === 'Minor' || state.selectedMode === 'Harmonic Minor' || state.selectedMode === 'Melodic Minor') {
+    keySig += 'm';
+  }
+  // For other modes (Dorian, Mixolydian), VexFlow doesn't have direct support, so we use the root
+  lessonNotation.render(vexNotes, clef, false, 0, keySig);
 }
 
 document.getElementById('btn-prev-chord')?.addEventListener('click', () => {
@@ -385,6 +392,9 @@ const virtualPiano = new VirtualPiano((note, active) => {
   inputManager.toggleNote(note, active);
 });
 virtualPiano.render('virtual-piano-container');
+// Set initial key context
+const initialState = stateManager.getState();
+virtualPiano.setKeyContext(initialState.selectedKeyId, initialState.selectedMode);
 
 // Toggle Piano Visibility
 const btnTogglePiano = document.getElementById('btn-toggle-piano');
@@ -497,8 +507,13 @@ function renderDrillChord() {
   const vexNotes = drillManager.getVexFlowNotes(octave);
   const currentIndex = drillManager.getCurrentIndex();
 
+  // Construct VexFlow key signature (e.g., "Eb" for Eb Major, "Ebm" for Eb Minor)
+  let keySig = state.selectedKeyId;
+  if (state.selectedMode === 'Minor' || state.selectedMode === 'Harmonic Minor' || state.selectedMode === 'Melodic Minor') {
+    keySig += 'm';
+  }
   // Pass the selected key to the notation renderer
-  drillNotation.render(vexNotes, clef, drillManager.isSequential, currentIndex, state.selectedKeyId);
+  drillNotation.render(vexNotes, clef, drillManager.isSequential, currentIndex, keySig);
 }
 
 document.getElementById('btn-next-drill')?.addEventListener('click', nextDrillQuestion);
@@ -566,8 +581,7 @@ textInput.addEventListener('input', () => {
 });
 
 // Initial Render
-// Initialize lesson manager with default state
-const initialState = stateManager.getState();
+// Initialize lesson manager with default state (reuse initialState from above)
 lessonManager.setKeyContext(initialState.selectedKeyId, initialState.selectedMode);
 renderLesson();
 

@@ -143,7 +143,9 @@ export function getScaleForKey(root: string, mode: KeyMode): NoteName[] {
 
 function fixEnharmonics(scale: NoteName[], root: string, mode: KeyMode): NoteName[] {
     // Gb Major and Eb Minor use Cb instead of B
-    if ((root === 'Gb' && mode === 'Major') || (root === 'Eb' && mode === 'Minor')) {
+    // Note: Melodic Minor doesn't use Cb because the 7th is raised to D
+    if ((root === 'Gb' && mode === 'Major') ||
+        (root === 'Eb' && (mode === 'Minor' || mode === 'Harmonic Minor'))) {
         scale = scale.map(n => n === 'B' ? 'Cb' : n);
     }
 
@@ -162,7 +164,7 @@ function fixEnharmonics(scale: NoteName[], root: string, mode: KeyMode): NoteNam
     }
 
     // Ab Minor uses Fb (E) and Cb (B)
-    if (root === 'Ab' && mode === 'Minor') {
+    if (root === 'Ab' && (mode === 'Minor' || mode === 'Harmonic Minor' || mode === 'Melodic Minor')) {
         scale = scale.map(n => {
             if (n === 'E') return 'Fb';
             if (n === 'B') return 'Cb';
@@ -206,4 +208,34 @@ export function isEnharmonicMatch(n1: string, n2: string): boolean {
     const i2 = getIndex(n2);
 
     return i1 !== -1 && i2 !== -1 && i1 === i2;
+}
+
+/**
+ * Given a physical piano note and a musical context (root + mode),
+ * return the contextually appropriate spelling.
+ * 
+ * For example:
+ * - In Eb Minor, the note "B" should be spelled as "Cb"
+ * - In C# Major, the note "C" should be spelled as "B#"
+ * - In F# Major, the note "F" should be spelled as "E#"
+ * 
+ * @param physicalNote - The note name from the piano key (e.g., 'B', 'C', 'Eb')
+ * @param root - The root note of the current key (e.g., 'Eb', 'C#')
+ * @param mode - The mode (e.g., 'Major', 'Minor')
+ * @returns The contextually correct spelling
+ */
+export function getContextualSpelling(physicalNote: NoteName, root: string, mode: KeyMode): NoteName {
+    // Get the scale for this key
+    const scale = getScaleForKey(root, mode);
+
+    // Check if the physical note (or its enharmonic equivalent) is in the scale
+    for (const scaleNote of scale) {
+        if (isEnharmonicMatch(physicalNote, scaleNote)) {
+            return scaleNote;
+        }
+    }
+
+    // If not in scale (chromatic note), return the original
+    // We could be smarter here and choose sharp vs flat based on key tendency
+    return physicalNote;
 }

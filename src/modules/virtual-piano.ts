@@ -1,4 +1,5 @@
 import { NoteName } from './content';
+import { getContextualSpelling, KeyMode } from './keys';
 
 export type NoteToggleCallback = (note: NoteName, active: boolean) => void;
 
@@ -6,6 +7,10 @@ export class VirtualPiano {
     private container: HTMLElement | null = null;
     private onNoteToggled: NoteToggleCallback;
     private activeNotes: Set<NoteName> = new Set();
+
+    // Musical context for enharmonic spelling
+    private currentRoot: string = 'C';
+    private currentMode: KeyMode = 'Major';
 
     // Define the range of notes to render (approx 1.5 octaves: C3 to G4)
     // We'll use a fixed range for now as per requirements
@@ -34,6 +39,14 @@ export class VirtualPiano {
 
     constructor(onNoteToggled: NoteToggleCallback) {
         this.onNoteToggled = onNoteToggled;
+    }
+
+    /**
+     * Set the current musical context for enharmonic spelling
+     */
+    public setKeyContext(root: string, mode: KeyMode) {
+        this.currentRoot = root;
+        this.currentMode = mode;
     }
 
     public render(containerId: string) {
@@ -67,19 +80,22 @@ export class VirtualPiano {
         });
     }
 
-    private handleInteraction(e: Event, note: NoteName) {
+    private handleInteraction(e: Event, physicalNote: NoteName) {
         e.preventDefault(); // Prevent default touch behaviors (scrolling/zooming)
 
-        // Toggle logic
-        const isActive = this.activeNotes.has(note);
+        // Convert the physical piano key to the contextually appropriate spelling
+        const contextualNote = getContextualSpelling(physicalNote, this.currentRoot, this.currentMode);
+
+        // Toggle logic using the contextual spelling
+        const isActive = this.activeNotes.has(contextualNote);
         if (isActive) {
-            this.activeNotes.delete(note);
+            this.activeNotes.delete(contextualNote);
         } else {
-            this.activeNotes.add(note);
+            this.activeNotes.add(contextualNote);
         }
 
-        this.updateKeyVisuals(note);
-        this.onNoteToggled(note, !isActive);
+        this.updateKeyVisuals(physicalNote);
+        this.onNoteToggled(contextualNote, !isActive);
     }
 
     private updateKeyVisuals(note: NoteName) {
