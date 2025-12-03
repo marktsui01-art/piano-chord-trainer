@@ -186,26 +186,24 @@ export function getModeRoot(root: string, _mode: KeyMode): NoteName {
     return root as NoteName;
 }
 
+export function getNoteIndex(n: string): number {
+    if (n === 'Cb') return 11; // B
+    if (n === 'B#') return 0; // C
+    if (n === 'Fb') return 4; // E
+    if (n === 'E#') return 5; // F
+
+    let idx = NOTES_SHARP.indexOf(n as NoteName);
+    if (idx !== -1) return idx;
+    idx = NOTES_FLAT.indexOf(n as NoteName);
+    if (idx !== -1) return idx;
+    return -1;
+}
+
 export function isEnharmonicMatch(n1: string, n2: string): boolean {
     if (n1 === n2) return true;
 
-    // Normalize to standard pitch class (0-11)
-
-    const getIndex = (n: string): number => {
-        if (n === 'Cb') return 11; // B
-        if (n === 'B#') return 0; // C
-        if (n === 'Fb') return 4; // E
-        if (n === 'E#') return 5; // F
-
-        let idx = NOTES_SHARP.indexOf(n as NoteName);
-        if (idx !== -1) return idx;
-        idx = NOTES_FLAT.indexOf(n as NoteName);
-        if (idx !== -1) return idx;
-        return -1;
-    };
-
-    const i1 = getIndex(n1);
-    const i2 = getIndex(n2);
+    const i1 = getNoteIndex(n1);
+    const i2 = getNoteIndex(n2);
 
     return i1 !== -1 && i2 !== -1 && i1 === i2;
 }

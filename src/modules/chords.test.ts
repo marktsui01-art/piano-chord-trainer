@@ -64,7 +64,7 @@ describe('Chord Generator', () => {
         expect(chords[6].root).toBe('D');
         // Depending on logic, might be labelled Diminished 7
         // Notes: D F Ab Cb.
-        // NOTE: The system currently represents Cb as B due to NoteName limitations.
-        expect(chords[6].notes).toEqual(['D', 'F', 'Ab', 'B']);
+        // NOTE: The system now correctly represents Cb.
+        expect(chords[6].notes).toEqual(['D', 'F', 'Ab', 'Cb']);
     });
 });

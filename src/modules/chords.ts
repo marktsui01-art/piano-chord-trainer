@@ -1,5 +1,5 @@
 import { NoteName, Chord } from './content';
-import { getScaleForKey, KeyMode } from './keys';
+import { getScaleForKey, KeyMode, getNoteIndex } from './keys';
 
 export type ChordType = 'triads' | 'sevenths';
 
@@ -28,48 +28,58 @@ export function generateDiatonicChords(root: string, mode: KeyMode, type: ChordT
             notes.push(seventh);
         }
 
-        // Determine quality
-        // This is complex to calculate purely from intervals without a reference.
-        // Simplified approach: Map based on known scale degrees for standard modes?
-        // OR calculate intervals between notes.
+        // Determine quality based on intervals
+        const getInterval = (n1: string, n2: string): number => {
+            const i1 = getNoteIndex(n1);
+            const i2 = getNoteIndex(n2);
+            if (i1 === -1 || i2 === -1) return 0;
+            let diff = i2 - i1;
+            if (diff < 0) diff += 12;
+            return diff;
+        };
 
-        // Let's calculate intervals from root to 3rd, 5th, 7th
-        // We need a helper to get semitone distance.
-        // For now, let's just return the notes and a placeholder quality/name
-        // The UI might need to just display the notes or we improve this later.
-
-        // Actually, we can infer quality from the intervals if we had semitone values.
-        // But we only have NoteNames.
-
-        // For the MVP refactor, let's try to identify the chord name if possible,
-        // or at least return the correct notes which is the critical part.
-
-        // Let's try to map the quality based on the mode and degree if it's a standard mode.
-        // Major: I(Maj), ii(min), iii(min), IV(Maj), V(Maj), vi(min), vii(dim)
-        // Minor: i(min), ii(dim), III(Maj), iv(min), v(min), VI(Maj), VII(Maj)
-
-        // This is brittle for modes like Dorian/Mixolydian or Harmonic Minor.
-        // Better to just return the notes and maybe a generic name "Chord I", "Chord ii" etc?
-        // The current app expects a 'quality' field.
-
-        // Let's use a heuristic for quality based on intervals if we can.
-        // Since we don't have an easy interval calculator here without circular deps or complex logic,
-        // let's stick to the generated notes which are definitely correct per the scale.
-        // We will label them with Roman Numerals? Or just Root + "Chord"?
-
-        // Re-using the existing "quality" types from content.ts
-        // We'll default to 'Major' if unsure, but for specific known modes we can be accurate.
+        const int3 = getInterval(chordRoot, third);
+        const int5 = getInterval(chordRoot, fifth);
 
         let quality: Chord['quality'] = 'Major';
-        let name = `${chordRoot} Chord`;
 
-        // TODO: Implement proper chord quality analysis
-        // For now, we rely on the fact that the NOTES are correct.
-        // The user can hear and see the notes.
+        if (int3 === 4 && int5 === 7) quality = 'Major';
+        else if (int3 === 3 && int5 === 7) quality = 'Minor';
+        else if (int3 === 3 && int5 === 6) quality = 'Diminished';
+        else if (int3 === 4 && int5 === 8) quality = 'Augmented';
 
-        // Special handling for Harmonic Minor to ensure V is Major/Dominant?
-        // The scale generation handles the notes (raised 7th).
-        // So the V chord (5-7-2) will naturally have the raised 7th (major 3rd of V).
+        if (type === 'sevenths') {
+            const seventh = extendedScale[i + 6];
+            const int7 = getInterval(chordRoot, seventh);
+
+            if (quality === 'Major') {
+                if (int7 === 11) quality = 'Major7';
+                else if (int7 === 10) quality = 'Dominant7';
+            } else if (quality === 'Minor') {
+                if (int7 === 10) quality = 'Minor7';
+                else if (int7 === 11) quality = 'MinorMajor7';
+            } else if (quality === 'Diminished') {
+                if (int7 === 10) quality = 'HalfDiminished7'; // m7b5
+                else if (int7 === 9) quality = 'Diminished7';
+            } else if (quality === 'Augmented') {
+                if (int7 === 10) quality = 'Augmented7';
+                else if (int7 === 11) quality = 'AugmentedMajor7';
+            }
+        }
+
+        let name = `${chordRoot} ${quality}`;
+        // Clean up name for standard triads
+        if (quality === 'Major') name = `${chordRoot} Major`;
+        if (quality === 'Minor') name = `${chordRoot} Minor`;
+        if (quality === 'Diminished') name = `${chordRoot} Diminished`;
+        if (quality === 'Augmented') name = `${chordRoot} Augmented`;
+
+        // Fix for "Dominant7" -> "Dominant 7" spacing in UI if needed, or keep as ID
+        if (quality === 'Dominant7') name = `${chordRoot} Dominant 7`;
+        if (quality === 'Major7') name = `${chordRoot} Major 7`;
+        if (quality === 'Minor7') name = `${chordRoot} Minor 7`;
+        if (quality === 'HalfDiminished7') name = `${chordRoot} Half-Diminished 7`;
+        if (quality === 'Diminished7') name = `${chordRoot} Diminished 7`;
 
         chords.push({
             name,

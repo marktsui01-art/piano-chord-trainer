@@ -1,7 +1,7 @@
 import { Chord, NoteName } from '../content';
 import { ChordModule } from '../state';
 import { DrillStrategy, DrillQuestion, DrillResult } from './DrillStrategy';
-import { KeyMode, getNoteIndex } from '../keys';
+import { KeyMode, isEnharmonicMatch } from '../keys';
 import { generateDiatonicChords } from '../chords';
 
 export class ChordDrill implements DrillStrategy {
@@ -43,7 +43,7 @@ export class ChordDrill implements DrillStrategy {
         if (availableChords.length === 0) {
             // Fallback (e.g. if key invalid)
             // But generateDiatonicChords guarantees array return
-             return { name: "Invalid Key/Mode" };
+            return { name: "Invalid Key/Mode" };
         }
 
         // Avoid repeating the same question if possible
@@ -126,28 +126,25 @@ export class ChordDrill implements DrillStrategy {
     public checkAnswer(inputNotes: NoteName[]): DrillResult {
         if (!this.currentChord) return 'incorrect';
 
-        // Use index-based comparison for enharmonic equivalence
-        const uniqueInputIndices = new Set<number>();
-        inputNotes.forEach(n => {
-             const idx = getNoteIndex(n);
-             if (idx !== -1) uniqueInputIndices.add(idx);
-        });
+        const targetNotes = this.currentChord.notes;
 
-        const uniqueTargetIndices = new Set<number>();
-        this.currentChord.notes.forEach(n => {
-             const idx = getNoteIndex(n);
-             if (idx !== -1) uniqueTargetIndices.add(idx);
-        });
+        // Check if every target note has an enharmonic match in input
+        const allTargetsFound = targetNotes.every(target =>
+            inputNotes.some(input => isEnharmonicMatch(input, target))
+        );
 
-        if (uniqueTargetIndices.size !== uniqueInputIndices.size) return 'incorrect';
+        // And check if every input note matches a target (no extra notes)
+        const allInputsValid = inputNotes.every(input =>
+            targetNotes.some(target => isEnharmonicMatch(input, target))
+        );
 
-        for (let targetIndex of uniqueTargetIndices) {
-            if (!uniqueInputIndices.has(targetIndex)) return 'incorrect';
+        if (allTargetsFound && allInputsValid) {
+            this.score++;
+            this.total++;
+            return 'correct';
         }
 
-        this.score++;
-        this.total++;
-        return 'correct';
+        return 'incorrect';
     }
 
     public getScore(): string {

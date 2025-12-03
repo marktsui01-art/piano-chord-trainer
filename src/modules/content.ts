@@ -37,7 +37,11 @@ export interface Chord {
   | 'Major7'
   | 'Minor7'
   | 'Dominant7'
-  | 'HalfDiminished7';
+  | 'HalfDiminished7'
+  | 'Diminished7'
+  | 'MinorMajor7'
+  | 'Augmented7'
+  | 'AugmentedMajor7';
   notes: NoteName[]; // Root position notes (no octave)
 }
 
