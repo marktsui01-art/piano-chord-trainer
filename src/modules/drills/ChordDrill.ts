@@ -144,6 +144,10 @@ export class ChordDrill implements DrillStrategy {
             return 'correct';
         }
 
+        if (allInputsValid) {
+            return 'continue';
+        }
+
         return 'incorrect';
     }
 
