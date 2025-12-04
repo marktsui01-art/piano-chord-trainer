@@ -78,7 +78,12 @@ export class MelodyDrill implements DrillStrategy {
             return 'correct';
         }
 
-        return advanced ? 'continue' : null;
+        if (advanced) {
+            return 'continue';
+        }
+
+        // If we had input but didn't advance, it's incorrect.
+        return 'incorrect';
     }
 
     public getScore(): string {

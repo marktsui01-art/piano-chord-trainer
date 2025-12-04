@@ -48,9 +48,11 @@ export class InputManager {
     }
   }
 
-  public resetInput() {
+  public resetInput(emit: boolean = true) {
     this.activeNotes.clear();
-    this.emitNotes();
+    if (emit) {
+      this.emitNotes();
+    }
   }
 
   private async initMidi() {

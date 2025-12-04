@@ -9,6 +9,7 @@ import { NoteName } from './modules/content';
 import { ALL_ROOTS, KeyMode } from './modules/keys';
 import { StateManager, AppState, ChordModule } from './modules/state';
 import { LessonManager } from './modules/lesson';
+import { TextInputHandler } from './modules/TextInputHandler';
 import './pwa';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
@@ -187,6 +188,26 @@ ALL_ROOTS.forEach(k => {
   keySelect.add(opt);
 });
 
+// Initialize Text Input Handler
+const textInputHandler = new TextInputHandler((notes) => {
+  if (stateManager.getState().mode === 'drill') {
+    const result = handleDrillInput(notes);
+
+    // Clear input if correct or continue
+    if (result === 'correct' || result === 'continue') {
+      textInput.value = '';
+    }
+
+    // For sequential drills, if they type a wrong note, clear it.
+    if (drillManager.isSequential && (result === 'incorrect')) {
+      textInput.value = '';
+      feedbackEl.textContent = 'Try Again';
+      feedbackEl.style.color = '#f44336';
+      audioManager.playIncorrect();
+    }
+  }
+});
+
 // --- State Management ---
 
 stateManager.subscribe((state: AppState) => {
@@ -205,8 +226,6 @@ function updateUI(state: AppState) {
     // Show key settings in lesson mode now (User Requirement)
     keySettings.style.display = 'block';
 
-    // Show mode selector if module is triads or sevenths, or melody
-    // Actually, for Chords (triads/sevenths) we also want to support Mode selection now (e.g. Harmonic Minor)
     if (['triads', 'sevenths', 'melody'].includes(state.module)) {
       modeSelectContainer.style.display = 'inline-block';
     } else {
@@ -221,14 +240,21 @@ function updateUI(state: AppState) {
     drillContainer.classList.add('active');
     drillSettings.style.display = 'block';
 
-    // In Drill Mode, always show Key Settings (except maybe random?)
-    // Originally it was hidden for chords, but now we support dynamic chords.
     keySettings.style.display = 'block';
 
     if (['triads', 'sevenths', 'melody'].includes(state.module)) {
       modeSelectContainer.style.display = 'inline-block';
     } else {
       modeSelectContainer.style.display = 'none';
+    }
+
+    // Set Piano Interaction Mode
+    // For melodic/speed/interval drills -> trigger
+    // For Chords -> toggle
+    if (['melody', 'speed', 'interval'].includes(state.module)) {
+      virtualPiano.setInteractionType('trigger');
+    } else {
+      virtualPiano.setInteractionType('toggle');
     }
 
     // Re-render drill chord if switching to drill mode
@@ -389,7 +415,15 @@ const inputManager = new InputManager((notes) => {
 
 // Initialize Virtual Piano
 const virtualPiano = new VirtualPiano((note, active) => {
-  inputManager.toggleNote(note, active);
+  if (stateManager.getState().module === 'melody' || stateManager.getState().module === 'speed' || stateManager.getState().module === 'interval') {
+    // Trigger mode
+    if (active) {
+      handleDrillInput([note]);
+    }
+  } else {
+    // Toggle mode (standard)
+    inputManager.toggleNote(note, active);
+  }
 });
 virtualPiano.render('virtual-piano-container');
 // Set initial key context
@@ -434,6 +468,19 @@ function handleDrillInput(notes: NoteName[]): DrillResult | null {
     const result = drillManager.checkAnswer(notes);
     console.log(`[Main] checkAnswer result: ${result}`);
 
+    // Visual feedback for Virtual Piano in Trigger Mode
+    if (['melody', 'speed', 'interval'].includes(stateManager.getState().module)) {
+      notes.forEach(n => {
+        // If correct/continue -> Green flash
+        // If incorrect -> Red flash
+        if (result === 'correct' || result === 'continue') {
+          virtualPiano.flashKey(n, 'correct', 500);
+        } else {
+          virtualPiano.flashKey(n, 'incorrect', 500);
+        }
+      });
+    }
+
     if (result === 'correct') {
       feedbackEl.textContent = 'Correct!';
       feedbackEl.style.color = '#4caf50'; // Green
@@ -463,15 +510,19 @@ function handleDrillInput(notes: NoteName[]): DrillResult | null {
       scoreEl.textContent = `Score: ${drillManager.getScore()}`;
 
       // Reset input (important for accumulated audio notes)
-      inputManager.resetInput();
+      inputManager.resetInput(false); // Silent reset to keep feedback visible
       virtualPiano.clear();
 
       setTimeout(nextDrillQuestion, 1500); // Slightly longer delay to hear the chord
     } else if (result === 'incorrect') {
       // ...
+      feedbackEl.textContent = 'Try Again'; // Immediate feedback
+      feedbackEl.style.color = '#f44336';
     } else if (result === 'continue') {
       // Re-render to show progress (e.g. cursor advancement)
       renderDrillChord();
+
+      feedbackEl.textContent = ''; // Clear "Try Again" if they get back on track
 
       // Play the note that was just hit correctly
       const lastNote = drillManager.getLastCorrectNote();
@@ -518,26 +569,23 @@ function renderDrillChord() {
 
 document.getElementById('btn-next-drill')?.addEventListener('click', nextDrillQuestion);
 
-// Handle Text Input Submission
+// Handle Text Input Submission (Legacy button still works, but textInputHandler handles typing)
 const submitAnswer = () => {
-  const text = textInput.value;
-  const notes = inputManager.processTextInput(text);
-  const result = handleDrillInput(notes);
+  // If we are in "Chord" mode, we should process the raw input value
+  if (['triads', 'sevenths'].includes(stateManager.getState().module)) {
+    const text = textInput.value;
+    const notes = inputManager.processTextInput(text);
+    const result = handleDrillInput(notes);
 
-  // If incorrect via text submit, show feedback
-  // Note: handleDrillInput already calls checkAnswer internally.
-  // We should NOT call it again here, as that can cause state side effects (like skipping notes).
-  if (result === 'incorrect' || (result === null && notes.length > 0)) {
-    // Check if it's actually incorrect (handleDrillInput might return continue)
-    // Actually handleDrillInput returns the DrillResult.
-    // If it is 'incorrect', we show feedback.
-    // If it is 'continue', we don't show "Try Again".
-    // If it returned null (not in drill mode?), we ignore.
-    if (result === 'incorrect') {
+    if (result === 'incorrect' || (result === null && notes.length > 0)) {
       feedbackEl.textContent = 'Try Again';
       feedbackEl.style.color = '#f44336';
       audioManager.playIncorrect();
     }
+  } else {
+    // For sequential drills, we assume TextInputHandler handled it.
+    // But if the user clicks submit with partial buffer?
+    textInputHandler.flush();
   }
 };
 
@@ -556,29 +604,34 @@ btnReveal.addEventListener('click', () => {
   }
 });
 
-textInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    submitAnswer();
-  }
-});
-
-textInput.addEventListener('input', () => {
-  if (drillManager.isSequential) {
-    const text = textInput.value;
-    const notes = inputManager.processTextInput(text);
-
-    if (notes.length > 0) {
-      // For sequential drills, we want to process immediately
-      const result = handleDrillInput(notes);
-
-      // If the note was accepted (correct or continue), clear the input
-      // so the user can type the next note without having to delete.
-      if (result === 'correct' || result === 'continue') {
-        textInput.value = '';
-      }
+// Replace 'input' event with TextInputHandler, BUT ONLY FOR SEQUENTIAL DRILLS
+textInput.addEventListener('input', (e: Event) => {
+  // Check if current module needs smart input (melody, speed, interval)
+  const module = stateManager.getState().module;
+  if (['melody', 'speed', 'interval'].includes(module)) {
+    const inputEvent = e as InputEvent;
+    if (inputEvent.data) {
+      textInputHandler.handleInput(inputEvent.data);
     }
   }
 });
+
+// We should prevent Enter from submitting form if we want TextInputHandler to do it.
+textInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault(); // Prevent default form submit behavior
+
+    // Check module
+    const module = stateManager.getState().module;
+    if (['melody', 'speed', 'interval'].includes(module)) {
+      textInputHandler.flush();
+    } else {
+      // For Chords, manually submit
+      submitAnswer();
+    }
+  }
+});
+
 
 // Initial Render
 // Initialize lesson manager with default state (reuse initialState from above)
