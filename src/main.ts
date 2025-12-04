@@ -9,6 +9,7 @@ import { NoteName } from './modules/content';
 import { ALL_ROOTS, KeyMode } from './modules/keys';
 import { StateManager, AppState, ChordModule } from './modules/state';
 import { LessonManager } from './modules/lesson';
+import { TextInputHandler } from './modules/TextInputHandler';
 import './pwa';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
@@ -187,6 +188,34 @@ ALL_ROOTS.forEach(k => {
   keySelect.add(opt);
 });
 
+// Initialize Text Input Handler
+// We want this to be active always, but only process when focused or when in "typing mode" if we were global.
+// For now, we attach it to the text input manually via event listeners below.
+// However, the `TextInputHandler` logic is generic.
+const textInputHandler = new TextInputHandler((notes) => {
+  if (stateManager.getState().mode === 'drill') {
+      const result = handleDrillInput(notes);
+
+      // Clear input if correct or continue
+      if (result === 'correct' || result === 'continue') {
+          textInput.value = '';
+      }
+
+      // If incorrect, we probably want to leave it for correction?
+      // Or if it was immediate flush, maybe clear it?
+      // "Eb" -> Incorrect.
+      // User has to type again.
+      if (drillManager.isSequential && (result === 'incorrect')) {
+           // For sequential drills, if they type a wrong note, we should probably clear it so they can try again immediately?
+           textInput.value = '';
+           // And show feedback?
+           feedbackEl.textContent = 'Try Again';
+           feedbackEl.style.color = '#f44336';
+           audioManager.playIncorrect();
+      }
+  }
+});
+
 // --- State Management ---
 
 stateManager.subscribe((state: AppState) => {
@@ -205,8 +234,6 @@ function updateUI(state: AppState) {
     // Show key settings in lesson mode now (User Requirement)
     keySettings.style.display = 'block';
 
-    // Show mode selector if module is triads or sevenths, or melody
-    // Actually, for Chords (triads/sevenths) we also want to support Mode selection now (e.g. Harmonic Minor)
     if (['triads', 'sevenths', 'melody'].includes(state.module)) {
       modeSelectContainer.style.display = 'inline-block';
     } else {
@@ -221,14 +248,21 @@ function updateUI(state: AppState) {
     drillContainer.classList.add('active');
     drillSettings.style.display = 'block';
 
-    // In Drill Mode, always show Key Settings (except maybe random?)
-    // Originally it was hidden for chords, but now we support dynamic chords.
     keySettings.style.display = 'block';
 
     if (['triads', 'sevenths', 'melody'].includes(state.module)) {
       modeSelectContainer.style.display = 'inline-block';
     } else {
       modeSelectContainer.style.display = 'none';
+    }
+
+    // Set Piano Interaction Mode
+    // For melodic/speed/interval drills -> trigger
+    // For Chords -> toggle
+    if (['melody', 'speed', 'interval'].includes(state.module)) {
+        virtualPiano.setInteractionType('trigger');
+    } else {
+        virtualPiano.setInteractionType('toggle');
     }
 
     // Re-render drill chord if switching to drill mode
@@ -389,7 +423,26 @@ const inputManager = new InputManager((notes) => {
 
 // Initialize Virtual Piano
 const virtualPiano = new VirtualPiano((note, active) => {
-  inputManager.toggleNote(note, active);
+  // In trigger mode, 'active' param is effectively ignored or treated as trigger
+  // But wait, InputManager expects "Note On" "Note Off"?
+  // If virtual piano sends (note, true) then (note, false) automatically?
+  // No, VirtualPiano `trigger` mode just calls `onNoteToggled(note, true)`.
+  // It does NOT call false.
+
+  // If we are in 'trigger' mode, we treat this as a single event.
+  // We should pass it to `handleDrillInput` directly?
+  // But `InputManager` is the central hub.
+
+  if (stateManager.getState().module === 'melody' || stateManager.getState().module === 'speed' || stateManager.getState().module === 'interval') {
+      // Trigger mode
+      if (active) {
+          handleDrillInput([note]);
+          // Flash key is handled in handleDrillInput via return result
+      }
+  } else {
+      // Toggle mode (standard)
+      inputManager.toggleNote(note, active);
+  }
 });
 virtualPiano.render('virtual-piano-container');
 // Set initial key context
@@ -434,6 +487,19 @@ function handleDrillInput(notes: NoteName[]): DrillResult | null {
     const result = drillManager.checkAnswer(notes);
     console.log(`[Main] checkAnswer result: ${result}`);
 
+    // Visual feedback for Virtual Piano in Trigger Mode
+    if (['melody', 'speed', 'interval'].includes(stateManager.getState().module)) {
+        notes.forEach(n => {
+             // If correct/continue -> Green flash
+             // If incorrect -> Red flash
+             if (result === 'correct' || result === 'continue') {
+                 virtualPiano.flashKey(n, 'correct', 500);
+             } else {
+                 virtualPiano.flashKey(n, 'incorrect', 500);
+             }
+        });
+    }
+
     if (result === 'correct') {
       feedbackEl.textContent = 'Correct!';
       feedbackEl.style.color = '#4caf50'; // Green
@@ -469,9 +535,13 @@ function handleDrillInput(notes: NoteName[]): DrillResult | null {
       setTimeout(nextDrillQuestion, 1500); // Slightly longer delay to hear the chord
     } else if (result === 'incorrect') {
       // ...
+      feedbackEl.textContent = 'Try Again'; // Immediate feedback
+      feedbackEl.style.color = '#f44336';
     } else if (result === 'continue') {
       // Re-render to show progress (e.g. cursor advancement)
       renderDrillChord();
+
+      feedbackEl.textContent = ''; // Clear "Try Again" if they get back on track
 
       // Play the note that was just hit correctly
       const lastNote = drillManager.getLastCorrectNote();
@@ -518,27 +588,16 @@ function renderDrillChord() {
 
 document.getElementById('btn-next-drill')?.addEventListener('click', nextDrillQuestion);
 
-// Handle Text Input Submission
+// Handle Text Input Submission (Legacy button still works, but textInputHandler handles typing)
 const submitAnswer = () => {
-  const text = textInput.value;
-  const notes = inputManager.processTextInput(text);
-  const result = handleDrillInput(notes);
+  // If user clicks submit button, we might want to process what's in the buffer?
+  // But TextInputHandler handles chars.
+  // If the user typed "C E G", TextInputHandler might have submitted them individually?
+  // For Chords, TextInputHandler flushes on space.
 
-  // If incorrect via text submit, show feedback
-  // Note: handleDrillInput already calls checkAnswer internally.
-  // We should NOT call it again here, as that can cause state side effects (like skipping notes).
-  if (result === 'incorrect' || (result === null && notes.length > 0)) {
-    // Check if it's actually incorrect (handleDrillInput might return continue)
-    // Actually handleDrillInput returns the DrillResult.
-    // If it is 'incorrect', we show feedback.
-    // If it is 'continue', we don't show "Try Again".
-    // If it returned null (not in drill mode?), we ignore.
-    if (result === 'incorrect') {
-      feedbackEl.textContent = 'Try Again';
-      feedbackEl.style.color = '#f44336';
-      audioManager.playIncorrect();
-    }
-  }
+  // If the user typed "C" (waiting), then clicked Submit.
+  // We should force flush.
+  textInputHandler.flush();
 };
 
 document.getElementById('btn-submit')?.addEventListener('click', submitAnswer);
@@ -556,29 +615,34 @@ btnReveal.addEventListener('click', () => {
   }
 });
 
+// Replace 'input' event with TextInputHandler
+textInput.addEventListener('input', (e: Event) => {
+    // We only need to handle the last character typed?
+    // Or just pass the whole value?
+    // TextInputHandler is designed for character-by-character input.
+    // However, the `input` event might trigger for pasting too.
+
+    // Simplest way:
+    // If we want to use TextInputHandler correctly, we should trap keydown or use input data.
+    // `e.data` contains the inserted character.
+    const inputEvent = e as InputEvent;
+    if (inputEvent.data) {
+        textInputHandler.handleInput(inputEvent.data);
+    } else {
+        // Fallback for interactions where data is null (e.g. deletion, some mobile keyboards?)
+        // If data is null, we might ignore or reset?
+        // If user deletes, we probably don't want to submit notes.
+    }
+});
+
+// We should prevent Enter from submitting form if we want TextInputHandler to do it.
 textInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
-    submitAnswer();
+    textInputHandler.flush();
+    e.preventDefault(); // Prevent default form submit behavior
   }
 });
 
-textInput.addEventListener('input', () => {
-  if (drillManager.isSequential) {
-    const text = textInput.value;
-    const notes = inputManager.processTextInput(text);
-
-    if (notes.length > 0) {
-      // For sequential drills, we want to process immediately
-      const result = handleDrillInput(notes);
-
-      // If the note was accepted (correct or continue), clear the input
-      // so the user can type the next note without having to delete.
-      if (result === 'correct' || result === 'continue') {
-        textInput.value = '';
-      }
-    }
-  }
-});
 
 // Initial Render
 // Initialize lesson manager with default state (reuse initialState from above)

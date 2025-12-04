@@ -7,6 +7,7 @@ export class VirtualPiano {
     private container: HTMLElement | null = null;
     private onNoteToggled: NoteToggleCallback;
     private activeNotes: Set<NoteName> = new Set();
+    private interactionMode: 'toggle' | 'trigger' = 'toggle';
 
     // Musical context for enharmonic spelling
     private currentRoot: string = 'C';
@@ -38,6 +39,14 @@ export class VirtualPiano {
     public setKeyContext(root: string, mode: KeyMode) {
         this.currentRoot = root;
         this.currentMode = mode;
+    }
+
+    /**
+     * Set interaction mode: 'toggle' (default) or 'trigger'
+     */
+    public setInteractionType(type: 'toggle' | 'trigger') {
+        this.interactionMode = type;
+        this.clear(); // Clear state when switching modes
     }
 
     public render(containerId: string) {
@@ -77,47 +86,41 @@ export class VirtualPiano {
         // Convert the physical piano key to the contextually appropriate spelling
         const contextualNote = getContextualSpelling(physicalNote, this.currentRoot, this.currentMode);
 
-        // Toggle logic using the contextual spelling
-        const isActive = this.activeNotes.has(contextualNote);
-        if (isActive) {
-            this.activeNotes.delete(contextualNote);
+        if (this.interactionMode === 'toggle') {
+            // Toggle logic (Original)
+            const isActive = this.activeNotes.has(contextualNote);
+            if (isActive) {
+                this.activeNotes.delete(contextualNote);
+            } else {
+                this.activeNotes.add(contextualNote);
+            }
+            this.updateKeyVisuals(physicalNote);
+            this.onNoteToggled(contextualNote, !isActive);
         } else {
-            this.activeNotes.add(contextualNote);
-        }
+            // Trigger logic (New)
+            // Trigger "Note On" (True)
+            // Note: We don't modify activeNotes here because we don't want it to stick visually as 'active' (green toggle).
+            // Instead, we rely on the drill logic to call flashKey() for feedback.
+            // Or, if we want instantaneous local feedback, we could flash it temporarily?
+            // The requirement says "Light up, be verified and then fade away".
+            // Verification happens in the callback.
 
-        this.updateKeyVisuals(physicalNote);
-        this.onNoteToggled(contextualNote, !isActive);
+            this.onNoteToggled(contextualNote, true);
+            // Immediately send false to indicate "key release" logic for the purpose of the engine?
+            // But the drill engine handles "one at a time".
+            // If we send true, the drill checks it.
+            // If we don't send false, the input manager might think it's still held?
+            // But input manager for virtual piano just calls toggleNote.
+            // Let's assume onNoteToggled handles it.
+        }
     }
 
     private updateKeyVisuals(note: NoteName) {
         if (!this.container) return;
 
-        // Find the canonical physical note for the given note
-        // The notes array defines the canonical physical notes (e.g. 'C#', 'Eb' is not in notes, but 'D#' is)
-        // Wait, 'D#' is in notes. 'Eb' is not.
-        // We need to map any incoming note to the canonical note used in this.notes
         const canonicalNote = this.getCanonicalNote(note);
-
-        // Since we are showing single octave but accepting notes from any octave,
-        // we select all keys matching the note name, regardless of octave.
         const keys = this.container.querySelectorAll(`[data-note="${canonicalNote}"]`);
 
-        // We need to know if the note is active.
-        // But `activeNotes` stores contextual spellings (e.g. Cb).
-        // `note` passed here is usually the physical note from interaction, OR contextual?
-        // In handleInteraction: updateKeyVisuals(physicalNote)
-        // physicalNote comes from the DOM element, so it IS the canonical note.
-
-        // But if updateKeyVisuals is called from elsewhere? It is private.
-        // It is only called from handleInteraction.
-
-        // However, handleInteraction toggles activeNotes with contextualNote.
-        // Then calls updateKeyVisuals with physicalNote.
-        // inside updateKeyVisuals, it checks `this.activeNotes.has(note)`.
-        // If `note` is physicalNote (e.g. 'B'), but activeNotes has 'Cb', then has('B') is false.
-        // So the key does not get 'active' class.
-
-        // We need to check if the canonical note corresponds to any active note.
         const isActive = Array.from(this.activeNotes).some(activeNote =>
             this.getCanonicalNote(activeNote) === canonicalNote
         );
@@ -151,6 +154,29 @@ export class VirtualPiano {
         });
     }
 
+    /**
+     * Temporarily flashes a key with a specific style (correct/incorrect)
+     */
+    public flashKey(note: NoteName, type: 'correct' | 'incorrect', duration: number = 300) {
+        if (!this.container) return;
+
+        const canonicalNote = this.getCanonicalNote(note);
+        const keys = this.container.querySelectorAll(`[data-note="${canonicalNote}"]`);
+
+        keys.forEach(k => {
+            // Remove conflicts
+            k.classList.remove('active', 'correct', 'incorrect');
+
+            // Add flash class
+            k.classList.add(type);
+
+            // Remove after duration
+            setTimeout(() => {
+                k.classList.remove(type);
+            }, duration);
+        });
+    }
+
     private getCanonicalNote(note: NoteName): NoteName {
         // Map common enharmonics to our canonical sharp-based names
         if (note === 'Cb') return 'B';
@@ -163,12 +189,6 @@ export class VirtualPiano {
         if (note === 'Gb') return 'F#';
         if (note === 'Ab') return 'G#';
         if (note === 'Bb') return 'A#';
-
-        // Add logic to check if it matches existing canonical notes
-        // Our canonical notes are sharps (C#, D#, F#, G#, A#)
-        // So flats should be converted.
-
-        // Double checks for less common ones if needed, but the above covers 12TET.
 
         return note;
     }
