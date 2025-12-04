@@ -18,21 +18,21 @@ describe('VirtualPiano', () => {
     it('should render keys into the container', () => {
         piano.render('piano-container');
         const keys = container.querySelectorAll('.piano-key');
-        expect(keys.length).toBeGreaterThan(0);
+        expect(keys.length).toBe(12); // Single octave
 
-        // Check for specific keys
-        const c3 = container.querySelector('[data-note="C"][data-octave="3"]');
-        expect(c3).not.toBeNull();
-        expect(c3?.classList.contains('white')).toBe(true);
+        // Check for specific keys (C4)
+        const c4 = container.querySelector('[data-note="C"][data-octave="4"]');
+        expect(c4).not.toBeNull();
+        expect(c4?.classList.contains('white')).toBe(true);
 
-        const cSharp3 = container.querySelector('[data-note="C#"][data-octave="3"]');
-        expect(cSharp3).not.toBeNull();
-        expect(cSharp3?.classList.contains('black')).toBe(true);
+        const cSharp4 = container.querySelector('[data-note="C#"][data-octave="4"]');
+        expect(cSharp4).not.toBeNull();
+        expect(cSharp4?.classList.contains('black')).toBe(true);
     });
 
     it('should toggle notes on click', () => {
         piano.render('piano-container');
-        const key = container.querySelector('[data-note="C"][data-octave="3"]') as HTMLElement;
+        const key = container.querySelector('[data-note="C"][data-octave="4"]') as HTMLElement;
 
         // First click: Activate
         key.dispatchEvent(new MouseEvent('mousedown'));
@@ -45,22 +45,32 @@ describe('VirtualPiano', () => {
         expect(key.classList.contains('active')).toBe(false);
     });
 
-    it('should update all octaves for the same note', () => {
+    it('should update visual state based on canonical note', () => {
         piano.render('piano-container');
-        const c3 = container.querySelector('[data-note="C"][data-octave="3"]') as HTMLElement;
         const c4 = container.querySelector('[data-note="C"][data-octave="4"]') as HTMLElement;
 
-        // Click C3
-        c3.dispatchEvent(new MouseEvent('mousedown'));
+        // Since we only have one octave now, this test is simplified to just check if interaction works
+        c4.dispatchEvent(new MouseEvent('mousedown'));
 
-        // Both should be active because they represent the same pitch class "C"
-        expect(c3.classList.contains('active')).toBe(true);
         expect(c4.classList.contains('active')).toBe(true);
+    });
+
+    it('should return contextually correct note name', () => {
+        piano.render('piano-container');
+        piano.setKeyContext('Eb', 'Minor');
+
+        // B in Eb Minor is Cb
+        const bKey = container.querySelector('[data-note="B"][data-octave="4"]') as HTMLElement;
+
+        bKey.dispatchEvent(new MouseEvent('mousedown'));
+
+        expect(callback).toHaveBeenCalledWith('Cb', true);
+        expect(bKey.classList.contains('active')).toBe(true);
     });
 
     it('should clear all active notes', () => {
         piano.render('piano-container');
-        const key = container.querySelector('[data-note="C"][data-octave="3"]') as HTMLElement;
+        const key = container.querySelector('[data-note="C"][data-octave="4"]') as HTMLElement;
 
         key.dispatchEvent(new MouseEvent('mousedown'));
         expect(key.classList.contains('active')).toBe(true);
