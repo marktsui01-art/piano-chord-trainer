@@ -453,12 +453,18 @@ document.body.addEventListener(
 
 // Mic Button
 btnMic.addEventListener('click', async () => {
-  try {
-    await inputManager.enableMicrophone();
-    btnMic.classList.add('active');
-    btnMic.textContent = "🎤 Mic On";
-  } catch (err) {
-    alert("Could not access microphone. Please check permissions.");
+  if (inputManager.isMicrophoneEnabled()) {
+    inputManager.disableMicrophone();
+    btnMic.classList.remove('active');
+    btnMic.textContent = "🎤 Enable Mic";
+  } else {
+    try {
+      await inputManager.enableMicrophone();
+      btnMic.classList.add('active');
+      btnMic.textContent = "🎤 Mic On";
+    } catch (err) {
+      alert("Could not access microphone. Please check permissions.");
+    }
   }
 });
 
