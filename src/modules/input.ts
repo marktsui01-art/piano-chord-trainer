@@ -36,6 +36,19 @@ export class InputManager {
     }
   }
 
+  public disableMicrophone() {
+    if (!this.isMicEnabled || !this.audioInput) return;
+
+    this.audioInput.stop();
+    this.audioInput = null;
+    this.isMicEnabled = false;
+    console.log("✓ Microphone Input disabled");
+  }
+
+  public isMicrophoneEnabled(): boolean {
+    return this.isMicEnabled;
+  }
+
   private handleAudioNote(note: NoteName) {
     // For audio input, we "accumulate" notes because it's monophonic.
     // If the user plays C, then E, then G, we want to build the chord C-E-G.
