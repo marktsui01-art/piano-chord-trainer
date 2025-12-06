@@ -14,6 +14,10 @@ export class IntervalDrill implements DrillStrategy {
         // Interval drill might be key-agnostic or use key for context
     }
 
+    public setOptions(_enableInversions: boolean, _enableWideRange: boolean) {
+        // Not implemented yet for Interval Drill
+    }
+
     public getQuestion(): DrillQuestion {
         // Simplified for now
         this.currentInterval = 'Perfect 5th';
