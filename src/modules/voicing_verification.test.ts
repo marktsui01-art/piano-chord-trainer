@@ -24,7 +24,7 @@ function getMidiPitch(note: string): number {
 describe('Voicing Verification', () => {
     it('should produce closed voicings (spread <= 12 semitones) for all permutations', () => {
         const drillManager = new DrillManager();
-        drillManager.setOptions(true, true); // Enable everything
+        drillManager.setOptions(true, 'wide'); // Enable everything
 
         // Test Triads
         drillManager.setModule('triads');
@@ -71,7 +71,7 @@ describe('Voicing Verification', () => {
 
     it('should handle octave shifts correctly without changing spread', () => {
         const drillManager = new DrillManager();
-        drillManager.setOptions(true, true);
+        drillManager.setOptions(true, 'wide');
         drillManager.setModule('sevenths');
 
         for (let i = 0; i < 50; i++) {

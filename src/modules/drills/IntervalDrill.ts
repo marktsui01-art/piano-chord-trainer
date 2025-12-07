@@ -14,7 +14,7 @@ export class IntervalDrill implements DrillStrategy {
         // Interval drill might be key-agnostic or use key for context
     }
 
-    public setOptions(_enableInversions: boolean, _enableWideRange: boolean) {
+    public setOptions(_enableInversions: boolean, _range: 'default' | 'low' | 'high' | 'wide') {
         // Not implemented yet for Interval Drill
     }
 
