@@ -15,7 +15,7 @@ export class DrillManager {
   private melodyDrill: MelodyDrill;
 
   private enableInversions: boolean = false;
-  private enableWideRange: boolean = false;
+  private range: 'default' | 'low' | 'high' | 'wide' = 'default';
 
   constructor() {
     this.chordDrill = new ChordDrill();
@@ -39,7 +39,7 @@ export class DrillManager {
 
     // Apply current options to the new strategy
     if (this.strategy.setOptions) {
-      this.strategy.setOptions(this.enableInversions, this.enableWideRange);
+      this.strategy.setOptions(this.enableInversions, this.range);
     }
 
     this.strategy.resetScore();
@@ -57,18 +57,18 @@ export class DrillManager {
 
     // Apply current options to the new strategy
     if (this.strategy.setOptions) {
-      this.strategy.setOptions(this.enableInversions, this.enableWideRange);
+      this.strategy.setOptions(this.enableInversions, this.range);
     }
 
     this.strategy.resetScore();
   }
 
-  public setOptions(enableInversions: boolean, enableWideRange: boolean) {
+  public setOptions(enableInversions: boolean, range: 'default' | 'low' | 'high' | 'wide') {
     this.enableInversions = enableInversions;
-    this.enableWideRange = enableWideRange;
+    this.range = range;
 
     if (this.strategy.setOptions) {
-      this.strategy.setOptions(enableInversions, enableWideRange);
+      this.strategy.setOptions(enableInversions, range);
     }
   }
 

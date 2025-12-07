@@ -11,7 +11,7 @@ export class MelodyDrill implements DrillStrategy {
     private total: number = 0;
     private currentKeyId: string = 'C';
     private currentMode: KeyMode = 'Major';
-    private enableWideRange: boolean = false;
+    private range: 'default' | 'low' | 'high' | 'wide' = 'default';
     private currentOctaveShift: number = 0;
 
     public setKeyContext(keyId: string, mode: KeyMode) {
@@ -19,9 +19,9 @@ export class MelodyDrill implements DrillStrategy {
         this.currentMode = mode;
     }
 
-    public setOptions(_enableInversions: boolean, enableWideRange: boolean) {
+    public setOptions(_enableInversions: boolean, range: 'default' | 'low' | 'high' | 'wide') {
         // Inversions not used in melody drill
-        this.enableWideRange = enableWideRange;
+        this.range = range;
     }
 
     private getDifficulty() {
@@ -37,12 +37,22 @@ export class MelodyDrill implements DrillStrategy {
         this.sequence = pattern.notes;
         this.currentIndex = 0;
 
-        // Determine random octave shift if wide range is enabled
-        if (this.enableWideRange) {
-            // -1, 0, 1
-            this.currentOctaveShift = Math.floor(Math.random() * 3) - 1;
-        } else {
-            this.currentOctaveShift = 0;
+        // Determine octave shift based on range setting
+        switch (this.range) {
+            case 'low':
+                this.currentOctaveShift = -1;
+                break;
+            case 'high':
+                this.currentOctaveShift = 1;
+                break;
+            case 'wide':
+                // Randomly -1, 0, 1
+                this.currentOctaveShift = Math.floor(Math.random() * 3) - 1;
+                break;
+            case 'default':
+            default:
+                this.currentOctaveShift = 0;
+                break;
         }
 
         return { name: pattern.name };
@@ -70,25 +80,9 @@ export class MelodyDrill implements DrillStrategy {
 
     public getLastCorrectNote(): string | null {
         if (this.currentIndex > 0) {
-            // This is used for visual feedback, usually without clef context or with assumed context
-            // But we don't have baseOctave here easily.
-            // Ideally should return name only or be careful.
-            // But main.ts calls this and plays it, likely without checking octave validity if not passed.
-            // Actually main.ts calls drillManager.getLastCorrectNote() then plays it.
-            // But drillManager doesn't pass baseOctave to getLastCorrectNote().
-            // So we return the stored absolute note?
-            // Wait, we modified getPlaybackNotes to shift.
-            // If we return unshifted note here, it might sound wrong (different octave than what was played in sequence).
-            // However, we don't know the shift here because we don't have baseOctave.
-
-            // NOTE: We can't easily fix this without passing baseOctave to getLastCorrectNote.
-            // But main.ts uses it for "continue" feedback, playing just that note.
-            // If we return the original generated note (centered at 4), it will play at 4.
-            // If the user is in Bass clef (3), they heard it at 3.
-            // This is a minor inconsistency but acceptable for now as the user hears the note they just played.
-            // Or we could store the last calculated shift? No, shift depends on baseOctave which can change dynamically (if user switches clef mid-drill).
-            // But usually clef doesn't change mid-drill.
-
+            // Note: This returns the absolute generated note (Octave 4-based).
+            // Visual feedback might be slightly off in octave if playback is shifted,
+            // but the pitch class will be correct.
             const note = this.sequence[this.currentIndex - 1];
             return `${note.name}${note.octave}`;
         }

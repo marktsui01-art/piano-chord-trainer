@@ -71,9 +71,15 @@ app.innerHTML = `
         <label style="margin-right: 1rem;">
           <input type="checkbox" id="chk-inversions" /> Inversions
         </label>
-        <label>
-          <input type="checkbox" id="chk-wide-range" /> Wide Range (Ledger Lines)
-        </label>
+        <div style="display: inline-block;">
+           <label for="range-select">Range:</label>
+           <select id="range-select" class="module-select" style="width: auto; padding: 0.2rem;">
+               <option value="default">Normal</option>
+               <option value="low">Low (-1 Oct)</option>
+               <option value="high">High (+1 Oct)</option>
+               <option value="wide">Wide (Random)</option>
+           </select>
+        </div>
       </div>
     </div>
 
@@ -165,7 +171,7 @@ const lessonContainer = document.getElementById('lesson-container')!;
 const drillContainer = document.getElementById('drill-container')!;
 const drillSettings = document.getElementById('drill-settings')!;
 const chkInversions = document.getElementById('chk-inversions') as HTMLInputElement;
-const chkWideRange = document.getElementById('chk-wide-range') as HTMLInputElement;
+const rangeSelect = document.getElementById('range-select') as HTMLSelectElement;
 
 // Lesson UI
 const lessonNameEl = document.getElementById('lesson-chord-name')!;
@@ -340,7 +346,8 @@ clefSelect.addEventListener('change', () => {
 
 // Settings Listeners
 function updateDrillSettings() {
-  drillManager.setOptions(chkInversions.checked, chkWideRange.checked);
+  const range = rangeSelect.value as 'default' | 'low' | 'high' | 'wide';
+  drillManager.setOptions(chkInversions.checked, range);
   // Only generate new question if we are currently in drill mode to avoid unnecessary updates
   if (stateManager.getState().mode === 'drill') {
     nextDrillQuestion();
@@ -348,7 +355,7 @@ function updateDrillSettings() {
 }
 
 chkInversions.addEventListener('change', updateDrillSettings);
-chkWideRange.addEventListener('change', updateDrillSettings);
+rangeSelect.addEventListener('change', updateDrillSettings);
 
 // Helper to get current octave based on clef
 function getCurrentOctave(): number {

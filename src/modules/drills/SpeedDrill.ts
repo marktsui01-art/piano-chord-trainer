@@ -14,16 +14,16 @@ export class SpeedDrill implements DrillStrategy {
     private total: number = 0;
     private currentKeyId: string = 'C';
     private currentMode: KeyMode = 'Major';
-    private enableWideRange: boolean = false;
+    private range: 'default' | 'low' | 'high' | 'wide' = 'default';
 
     public setKeyContext(keyId: string, mode: KeyMode) {
         this.currentKeyId = keyId;
         this.currentMode = mode;
     }
 
-    public setOptions(_enableInversions: boolean, enableWideRange: boolean) {
+    public setOptions(_enableInversions: boolean, range: 'default' | 'low' | 'high' | 'wide') {
         // Inversions not used in speed drill
-        this.enableWideRange = enableWideRange;
+        this.range = range;
     }
 
     public getQuestion(): DrillQuestion {
@@ -36,13 +36,23 @@ export class SpeedDrill implements DrillStrategy {
         // Pick random note from scale
         const name = effectiveScale[Math.floor(Math.random() * effectiveScale.length)];
 
-        // Calculate octave offset based on wide range setting
-        // Normal range (0): Notes stay near base octave
-        // Wide range (-1, 0, 1): Notes can be one octave lower or higher
+        // Calculate octave offset based on range setting
         let octaveOffset = 0;
-        if (this.enableWideRange) {
-             // -1, 0, 1
-             octaveOffset = Math.floor(Math.random() * 3) - 1;
+        switch (this.range) {
+            case 'low':
+                octaveOffset = -1;
+                break;
+            case 'high':
+                octaveOffset = 1;
+                break;
+            case 'wide':
+                // -1, 0, 1
+                octaveOffset = Math.floor(Math.random() * 3) - 1;
+                break;
+            case 'default':
+            default:
+                octaveOffset = 0;
+                break;
         }
 
         this.currentNote = { name, octaveOffset };

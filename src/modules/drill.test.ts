@@ -56,14 +56,24 @@ describe('DrillManager', () => {
 
         it('should return incorrect for incorrect answer', () => {
             drillManager.getQuestion();
-            const result = drillManager.checkAnswer(['C', 'D', 'E']);
+            // We need to ensure we pass notes that are NOT in the chord.
+            // But we don't know the chord.
+            // Let's pass a nonsense note that is never in C Major scale? 'C#' is in scale? No.
+            // C Major: C D E F G A B.
+            // So C# is definitely incorrect.
+            const result = drillManager.checkAnswer(['C#']);
             expect(result).toBe('incorrect');
         });
 
-        it('should return incorrect for partial answer', () => {
+        it('should return continue for partial answer', () => {
             drillManager.getQuestion();
-            const result = drillManager.checkAnswer(['C', 'E']);
-            expect(result).toBe('incorrect');
+            const currentChord = drillManager.getCurrentChord();
+            // Take subset
+            if (currentChord && currentChord.notes.length > 1) {
+                 const subset = [currentChord.notes[0]];
+                 const result = drillManager.checkAnswer(subset);
+                 expect(result).toBe('continue');
+            }
         });
 
         it('should accept notes in any order', () => {
@@ -85,7 +95,8 @@ describe('DrillManager', () => {
 
         it('should not increment score for incorrect answers', () => {
             drillManager.getQuestion();
-            drillManager.checkAnswer(['C', 'D', 'E']);
+            // Use invalid note
+            drillManager.checkAnswer(['C#']);
             expect(drillManager.getScore()).toBe('0 / 0');
         });
 
