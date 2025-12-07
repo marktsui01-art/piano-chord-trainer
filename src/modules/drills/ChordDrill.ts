@@ -18,7 +18,7 @@ export class ChordDrill implements DrillStrategy {
     private currentMode: KeyMode = 'Major';
 
     public enableInversions: boolean = false;
-    public enableWideRange: boolean = false;
+    public range: 'default' | 'low' | 'high' | 'wide' = 'default';
 
     public setModule(module: ChordModule) {
         this.currentModule = module;
@@ -29,9 +29,9 @@ export class ChordDrill implements DrillStrategy {
         this.currentMode = mode;
     }
 
-    public setOptions(enableInversions: boolean, enableWideRange: boolean) {
+    public setOptions(enableInversions: boolean, range: 'default' | 'low' | 'high' | 'wide') {
         this.enableInversions = enableInversions;
-        this.enableWideRange = enableWideRange;
+        this.range = range;
     }
 
     public getQuestion(): DrillQuestion {
@@ -62,14 +62,24 @@ export class ChordDrill implements DrillStrategy {
             this.currentInversion = 0;
         }
 
-        // Randomize Octave Shift (Ledger Lines)
-        if (this.enableWideRange) {
-            const rand = Math.random();
-            if (rand < 0.33) this.currentOctaveShift = -1;
-            else if (rand < 0.66) this.currentOctaveShift = 0;
-            else this.currentOctaveShift = 1;
-        } else {
-            this.currentOctaveShift = 0;
+        // Determine Octave Shift based on Range
+        switch (this.range) {
+            case 'low':
+                this.currentOctaveShift = -1;
+                break;
+            case 'high':
+                this.currentOctaveShift = 1;
+                break;
+            case 'wide':
+                const rand = Math.random();
+                if (rand < 0.33) this.currentOctaveShift = -1;
+                else if (rand < 0.66) this.currentOctaveShift = 0;
+                else this.currentOctaveShift = 1;
+                break;
+            case 'default':
+            default:
+                this.currentOctaveShift = 0;
+                break;
         }
 
         return { name: this.currentChord.name };

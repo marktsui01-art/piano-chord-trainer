@@ -14,6 +14,9 @@ export class DrillManager {
   private intervalDrill: IntervalDrill;
   private melodyDrill: MelodyDrill;
 
+  private enableInversions: boolean = false;
+  private range: 'default' | 'low' | 'high' | 'wide' = 'default';
+
   constructor() {
     this.chordDrill = new ChordDrill();
     this.speedDrill = new SpeedDrill();
@@ -33,6 +36,12 @@ export class DrillManager {
       this.strategy = this.chordDrill;
       this.chordDrill.setModule(module);
     }
+
+    // Apply current options to the new strategy
+    if (this.strategy.setOptions) {
+      this.strategy.setOptions(this.enableInversions, this.range);
+    }
+
     this.strategy.resetScore();
   }
 
@@ -45,11 +54,22 @@ export class DrillManager {
       default:
         this.strategy = this.chordDrill; break;
     }
+
+    // Apply current options to the new strategy
+    if (this.strategy.setOptions) {
+      this.strategy.setOptions(this.enableInversions, this.range);
+    }
+
     this.strategy.resetScore();
   }
 
-  public setOptions(enableInversions: boolean, enableWideRange: boolean) {
-    this.chordDrill.setOptions(enableInversions, enableWideRange);
+  public setOptions(enableInversions: boolean, range: 'default' | 'low' | 'high' | 'wide') {
+    this.enableInversions = enableInversions;
+    this.range = range;
+
+    if (this.strategy.setOptions) {
+      this.strategy.setOptions(enableInversions, range);
+    }
   }
 
   public getQuestion(keyId: string = 'C', mode: KeyMode = 'Major'): DrillQuestion {

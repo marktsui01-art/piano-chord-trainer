@@ -17,6 +17,9 @@ export interface DrillStrategy {
     // Optional method to set key context
     setKeyContext?(keyId: string, mode: KeyMode): void;
 
+    // Optional method to set drill options
+    setOptions?(enableInversions: boolean, range: 'default' | 'low' | 'high' | 'wide'): void;
+
     /**
      * Returns notes formatted for VexFlow (e.g. "C/4")
      */

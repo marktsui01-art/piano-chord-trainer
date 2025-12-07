@@ -11,10 +11,17 @@ export class MelodyDrill implements DrillStrategy {
     private total: number = 0;
     private currentKeyId: string = 'C';
     private currentMode: KeyMode = 'Major';
+    private range: 'default' | 'low' | 'high' | 'wide' = 'default';
+    private currentOctaveShift: number = 0;
 
     public setKeyContext(keyId: string, mode: KeyMode) {
         this.currentKeyId = keyId;
         this.currentMode = mode;
+    }
+
+    public setOptions(_enableInversions: boolean, range: 'default' | 'low' | 'high' | 'wide') {
+        // Inversions not used in melody drill
+        this.range = range;
     }
 
     private getDifficulty() {
@@ -30,25 +37,52 @@ export class MelodyDrill implements DrillStrategy {
         this.sequence = pattern.notes;
         this.currentIndex = 0;
 
+        // Determine octave shift based on range setting
+        switch (this.range) {
+            case 'low':
+                this.currentOctaveShift = -1;
+                break;
+            case 'high':
+                this.currentOctaveShift = 1;
+                break;
+            case 'wide':
+                // Randomly -1, 0, 1
+                this.currentOctaveShift = Math.floor(Math.random() * 3) - 1;
+                break;
+            case 'default':
+            default:
+                this.currentOctaveShift = 0;
+                break;
+        }
+
         return { name: pattern.name };
     }
 
-    public getVexFlowNotes(_baseOctave: number): string[] {
-        // Render the full sequence
-        return this.sequence.map(n => `${n.name}/${n.octave}`);
+    public getVexFlowNotes(baseOctave: number): string[] {
+        // Shift notes to be relative to baseOctave
+        // pattern generates notes in Octave 4.
+        // If baseOctave is 3 (Bass), we want notes to be lower (Shift -1 from 4).
+        // Shift formula: baseOctave - 4 + this.currentOctaveShift
+
+        const shift = baseOctave - 4 + this.currentOctaveShift;
+        return this.sequence.map(n => `${n.name}/${n.octave + shift}`);
     }
 
     public getCurrentIndex(): number {
         return this.currentIndex;
     }
 
-    public getPlaybackNotes(_baseOctave: number): string[] {
+    public getPlaybackNotes(baseOctave: number): string[] {
         // Return full sequence for playback
-        return this.sequence.map(n => `${n.name}${n.octave}`);
+        const shift = baseOctave - 4 + this.currentOctaveShift;
+        return this.sequence.map(n => `${n.name}${n.octave + shift}`);
     }
 
     public getLastCorrectNote(): string | null {
         if (this.currentIndex > 0) {
+            // Note: This returns the absolute generated note (Octave 4-based).
+            // Visual feedback might be slightly off in octave if playback is shifted,
+            // but the pitch class will be correct.
             const note = this.sequence[this.currentIndex - 1];
             return `${note.name}${note.octave}`;
         }

@@ -4,7 +4,7 @@ import { KeyMode, getScaleForKey, isEnharmonicMatch } from '../keys';
 
 interface SpeedNote {
     name: NoteName;
-    octave: number;
+    octaveOffset: number;
 }
 
 export class SpeedDrill implements DrillStrategy {
@@ -14,10 +14,16 @@ export class SpeedDrill implements DrillStrategy {
     private total: number = 0;
     private currentKeyId: string = 'C';
     private currentMode: KeyMode = 'Major';
+    private range: 'default' | 'low' | 'high' | 'wide' = 'default';
 
     public setKeyContext(keyId: string, mode: KeyMode) {
         this.currentKeyId = keyId;
         this.currentMode = mode;
+    }
+
+    public setOptions(_enableInversions: boolean, range: 'default' | 'low' | 'high' | 'wide') {
+        // Inversions not used in speed drill
+        this.range = range;
     }
 
     public getQuestion(): DrillQuestion {
@@ -30,21 +36,37 @@ export class SpeedDrill implements DrillStrategy {
         // Pick random note from scale
         const name = effectiveScale[Math.floor(Math.random() * effectiveScale.length)];
 
-        // Octave 3, 4, 5
-        const octave = 3 + Math.floor(Math.random() * 3);
+        // Calculate octave offset based on range setting
+        let octaveOffset = 0;
+        switch (this.range) {
+            case 'low':
+                octaveOffset = -1;
+                break;
+            case 'high':
+                octaveOffset = 1;
+                break;
+            case 'wide':
+                // -1, 0, 1
+                octaveOffset = Math.floor(Math.random() * 3) - 1;
+                break;
+            case 'default':
+            default:
+                octaveOffset = 0;
+                break;
+        }
 
-        this.currentNote = { name, octave };
+        this.currentNote = { name, octaveOffset };
         return { name: `Note: ${name}` };
     }
 
-    public getVexFlowNotes(_baseOctave: number): string[] {
+    public getVexFlowNotes(baseOctave: number): string[] {
         if (!this.currentNote) return [];
-        return [`${this.currentNote.name}/${this.currentNote.octave}`];
+        return [`${this.currentNote.name}/${baseOctave + this.currentNote.octaveOffset}`];
     }
 
-    public getPlaybackNotes(_baseOctave: number): string[] {
+    public getPlaybackNotes(baseOctave: number): string[] {
         if (!this.currentNote) return [];
-        return [`${this.currentNote.name}${this.currentNote.octave}`];
+        return [`${this.currentNote.name}${baseOctave + this.currentNote.octaveOffset}`];
     }
 
     public checkAnswer(inputNotes: NoteName[]): DrillResult {
