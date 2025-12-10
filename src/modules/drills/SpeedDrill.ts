@@ -69,6 +69,15 @@ export class SpeedDrill implements DrillStrategy {
         return [`${this.currentNote.name}${baseOctave + this.currentNote.octaveOffset}`];
     }
 
+    public getLastCorrectNote(baseOctave: number): string | null {
+        // If answered correctly, the last correct note IS the current note
+        // We can't know if it was just answered correctly based on state here easily without tracking
+        // But since this is a single note drill, if we are asking for it, it's the one.
+        // However, main.ts calls this after checkAnswer returns correct/continue.
+        if (!this.currentNote) return null;
+        return `${this.currentNote.name}${baseOctave + this.currentNote.octaveOffset}`;
+    }
+
     public checkAnswer(inputNotes: NoteName[]): DrillResult {
         if (!this.currentNote) return null;
 

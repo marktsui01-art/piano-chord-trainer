@@ -107,9 +107,9 @@ export class DrillManager {
     return this.strategy.getPlaybackNotes(baseOctave);
   }
 
-  public getLastCorrectNote(): string | null {
+  public getLastCorrectNote(baseOctave: number): string | null {
     if (this.strategy.getLastCorrectNote) {
-      return this.strategy.getLastCorrectNote();
+      return this.strategy.getLastCorrectNote(baseOctave);
     }
     return null;
   }

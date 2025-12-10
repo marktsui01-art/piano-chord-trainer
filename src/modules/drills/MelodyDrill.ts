@@ -78,13 +78,11 @@ export class MelodyDrill implements DrillStrategy {
         return this.sequence.map(n => `${n.name}${n.octave + shift}`);
     }
 
-    public getLastCorrectNote(): string | null {
+    public getLastCorrectNote(baseOctave: number): string | null {
         if (this.currentIndex > 0) {
-            // Note: This returns the absolute generated note (Octave 4-based).
-            // Visual feedback might be slightly off in octave if playback is shifted,
-            // but the pitch class will be correct.
+            const shift = baseOctave - 4 + this.currentOctaveShift;
             const note = this.sequence[this.currentIndex - 1];
-            return `${note.name}${note.octave}`;
+            return `${note.name}${note.octave + shift}`;
         }
         return null;
     }

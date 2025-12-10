@@ -20,6 +20,10 @@ export class ChordDrill implements DrillStrategy {
     public enableInversions: boolean = false;
     public range: 'default' | 'low' | 'high' | 'wide' = 'default';
 
+    // Track input state for incremental feedback
+    private previousInputNotes: NoteName[] = [];
+    private lastMatchedPitch: string | null = null;
+
     public setModule(module: ChordModule) {
         this.currentModule = module;
     }
@@ -53,6 +57,8 @@ export class ChordDrill implements DrillStrategy {
         } while (availableChords.length > 1 && this.currentChord && nextChord.name === this.currentChord.name);
 
         this.currentChord = nextChord;
+        this.previousInputNotes = [];
+        this.lastMatchedPitch = null;
 
         // Randomize Inversion
         if (this.enableInversions) {
@@ -133,10 +139,51 @@ export class ChordDrill implements DrillStrategy {
         return workingNotes;
     }
 
+    public getLastCorrectNote(baseOctave: number): string | null {
+        // If we have a cached matched pitch (NoteName), map it to the actual playback pitch
+        // We need to re-calculate the pitch because we don't store the baseOctave.
+        // Actually, we store lastMatchedPitch as just the NoteName?
+        // No, we should store the NoteName and find the corresponding pitch in context.
+
+        if (!this.lastMatchedPitch) return null;
+
+        // Find the matching pitch in the current voicing
+        const normalized = this.getNormalizedNotes();
+        // normalized has { name, octaveOffset }
+
+        // Find the item that corresponds to lastMatchedPitch (NoteName)
+        // Note: lastMatchedPitch here is the NoteName string e.g. 'C'
+        const match = normalized.find(n => isEnharmonicMatch(n.name, this.lastMatchedPitch!));
+
+        if (match) {
+            return `${match.name}${baseOctave + match.octaveOffset}`;
+        }
+        return null;
+    }
+
     public checkAnswer(inputNotes: NoteName[]): DrillResult {
         if (!this.currentChord) return 'incorrect';
 
         const targetNotes = this.currentChord.notes;
+
+        // Check for new correct note to trigger feedback
+        // We look for a note in inputNotes that is NOT in previousInputNotes
+        // AND is part of the target chord.
+        const newNotes = inputNotes.filter(n => !this.previousInputNotes.includes(n));
+
+        // Update previous state immediately (for next call)
+        // Wait, if it's incorrect, do we update? Yes, input state is input state.
+        this.previousInputNotes = [...inputNotes];
+
+        // Did we find a new correct note?
+        const newCorrectNote = newNotes.find(n =>
+            targetNotes.some(target => isEnharmonicMatch(n, target))
+        );
+
+        if (newCorrectNote) {
+            this.lastMatchedPitch = newCorrectNote;
+        }
+
 
         // Check if every target note has an enharmonic match in input
         const allTargetsFound = targetNotes.every(target =>
