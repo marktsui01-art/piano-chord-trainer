@@ -498,25 +498,40 @@ function handleDrillInput(notes: NoteName[]): DrillResult | null {
       feedbackEl.textContent = 'Correct!';
       feedbackEl.style.color = '#4caf50'; // Green
 
-      // Play the actual chord or melody
+      // Play audio feedback based on drill type
       try {
-        if (drillManager.isSequential) {
-          const pitches = drillManager.getCurrentPitches(getCurrentOctave());
-          console.log(`[Main] Playing melody sequence: ${pitches}`);
-          audioManager.playNotes(pitches, '2n');
+        const octave = getCurrentOctave();
+        const module = stateManager.getState().module;
+        const isChordModule = ['triads', 'sevenths'].includes(module);
+
+        if (isChordModule) {
+           // For Chords: Play the last note (completion), Pause, then Play Full Chord
+           const lastNote = drillManager.getLastCorrectNote(octave);
+           if (lastNote) {
+             audioManager.playNotes([lastNote], '4n');
+           }
+
+           // Pause then full chord
+           setTimeout(() => {
+              const pitches = drillManager.getCurrentPitches(octave);
+              console.log(`[Main] Playing full chord after pause: ${pitches}`);
+              audioManager.playNotes(pitches, '2n');
+           }, 600);
         } else {
-          const currentChord = drillManager.getCurrentChord();
-          if (currentChord) {
-            const pitches = drillManager.getCurrentPitches(getCurrentOctave());
-            console.log(`[Main] Playing chord: ${pitches}`);
-            audioManager.playNotes(pitches, '2n');
-          } else {
-            audioManager.playCorrect();
-          }
+           // For Melodic/Speed/Interval: Only play the last note (feedback for completion).
+           // Do NOT play the full sequence/chord at the end.
+           const lastNote = drillManager.getLastCorrectNote(octave);
+           if (lastNote) {
+             console.log(`[Main] Playing last note of sequence/drill: ${lastNote}`);
+             audioManager.playNotes([lastNote], '4n');
+           } else {
+             // Fallback if no last note logic (e.g. should not happen usually)
+             audioManager.playCorrect();
+           }
         }
+
       } catch (e) {
         console.error('[Main] Error playing audio feedback:', e);
-        // Fallback to simple beep if something goes wrong
         audioManager.playCorrect();
       }
 
@@ -526,7 +541,11 @@ function handleDrillInput(notes: NoteName[]): DrillResult | null {
       inputManager.resetInput(false); // Silent reset to keep feedback visible
       virtualPiano.clear();
 
-      setTimeout(nextDrillQuestion, 1500); // Slightly longer delay to hear the chord
+      // Delay next question to allow feedback to be heard
+      // For chords, we have a 600ms pause + playback time ~1s -> 2s total wait
+      // For melody, just the note ~0.5s -> 1s wait
+      const delay = ['triads', 'sevenths'].includes(stateManager.getState().module) ? 2000 : 1000;
+      setTimeout(nextDrillQuestion, delay);
     } else if (result === 'incorrect') {
       // ...
       feedbackEl.textContent = 'Try Again'; // Immediate feedback
@@ -538,7 +557,7 @@ function handleDrillInput(notes: NoteName[]): DrillResult | null {
       feedbackEl.textContent = ''; // Clear "Try Again" if they get back on track
 
       // Play the note that was just hit correctly
-      const lastNote = drillManager.getLastCorrectNote();
+      const lastNote = drillManager.getLastCorrectNote(getCurrentOctave());
       if (lastNote) {
         audioManager.playNotes([lastNote], '4n');
       }
