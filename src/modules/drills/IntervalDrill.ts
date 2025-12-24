@@ -35,6 +35,11 @@ export class IntervalDrill implements DrillStrategy {
         return [`${this.startNote}${baseOctave}`, `${this.targetNote}${baseOctave}`];
     }
 
+    public getLastCorrectNote(baseOctave: number): string | null {
+        // Assume the target note is the one they just entered to complete the interval
+        return `${this.targetNote}${baseOctave}`;
+    }
+
     public checkAnswer(inputNotes: NoteName[]): DrillResult {
         if (inputNotes.includes(this.targetNote)) {
             this.score++;

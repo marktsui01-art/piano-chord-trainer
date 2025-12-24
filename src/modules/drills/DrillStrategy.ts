@@ -29,5 +29,9 @@ export interface DrillStrategy {
      * Returns notes formatted for Tone.js (e.g. "C4")
      */
     getPlaybackNotes(baseOctave: number): string[];
-    getLastCorrectNote?(): string | null;
+
+    /**
+     * Returns the last correctly identified note (e.g. "C4")
+     */
+    getLastCorrectNote?(baseOctave: number): string | null;
 }
