@@ -47,12 +47,19 @@ export class DrillManager {
 
   public setStrategy(strategyName: 'chord' | 'melody' | 'speed' | 'interval') {
     switch (strategyName) {
-      case 'melody': this.strategy = this.melodyDrill; break;
-      case 'speed': this.strategy = this.speedDrill; break;
-      case 'interval': this.strategy = this.intervalDrill; break;
+      case 'melody':
+        this.strategy = this.melodyDrill;
+        break;
+      case 'speed':
+        this.strategy = this.speedDrill;
+        break;
+      case 'interval':
+        this.strategy = this.intervalDrill;
+        break;
       case 'chord':
       default:
-        this.strategy = this.chordDrill; break;
+        this.strategy = this.chordDrill;
+        break;
     }
 
     // Apply current options to the new strategy

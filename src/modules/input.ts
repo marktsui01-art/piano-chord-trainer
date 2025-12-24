@@ -29,9 +29,9 @@ export class InputManager {
     try {
       await this.audioInput.start();
       this.isMicEnabled = true;
-      console.log("✓ Microphone Input enabled");
+      console.log('✓ Microphone Input enabled');
     } catch (err) {
-      console.error("Failed to enable microphone", err);
+      console.error('Failed to enable microphone', err);
       throw err;
     }
   }
@@ -42,7 +42,7 @@ export class InputManager {
     this.audioInput.stop();
     this.audioInput = null;
     this.isMicEnabled = false;
-    console.log("✓ Microphone Input disabled");
+    console.log('✓ Microphone Input disabled');
   }
 
   public isMicrophoneEnabled(): boolean {
@@ -113,9 +113,9 @@ export class InputManager {
     this.midiInput.addListener('noteoff', (e) => {
       const noteName = (e.note.name + (e.note.accidental || '')) as NoteName;
       // Only remove if we are NOT in "accumulation mode" (which we are effectively in if mic is on?)
-      // Actually, MIDI should behave normally (hold to play). 
+      // Actually, MIDI should behave normally (hold to play).
       // Audio input is the one that needs accumulation.
-      // But if we mix them, it might be weird. 
+      // But if we mix them, it might be weird.
       // Let's keep MIDI standard: lift key = remove note.
       // Audio input notes will stick until reset.
       this.activeNotes.delete(noteName);

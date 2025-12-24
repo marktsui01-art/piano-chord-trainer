@@ -16,12 +16,12 @@ const app = document.querySelector<HTMLDivElement>('#app')!;
 
 app.innerHTML = `
   <div class="container">
-    <button id="btn-mobile-menu" class="btn-icon" title="Menu">☰</button>
+    <button id="btn-mobile-menu" class="btn-icon" title="Menu" aria-label="Menu">☰</button>
 
     <div id="app-header" class="app-header">
       <div class="header-top">
         <h1>Piano Chord Trainer</h1>
-        <button id="btn-close-menu" class="btn-icon close-menu" title="Close Menu">✕</button>
+        <button id="btn-close-menu" class="btn-icon close-menu" title="Close Menu" aria-label="Close Menu">✕</button>
       </div>
       
       <div id="loading-indicator" class="loading-indicator">Loading Piano Sounds...</div>
@@ -93,9 +93,9 @@ app.innerHTML = `
           <div id="lesson-chord-notes" class="chord-notes">C - E - G</div>
           
           <div class="lesson-controls">
-            <button id="btn-prev-chord" class="btn-nav">←</button>
+            <button id="btn-prev-chord" class="btn-nav" aria-label="Previous Chord">←</button>
             <button id="btn-play-lesson" class="btn-play">▶ Play</button>
-            <button id="btn-next-chord" class="btn-nav">→</button>
+            <button id="btn-next-chord" class="btn-nav" aria-label="Next Chord">→</button>
           </div>
         </div>
       </div>
@@ -114,7 +114,7 @@ app.innerHTML = `
           </div>
 
           <div class="input-controls">
-            <input type="text" id="text-input" placeholder="Type notes (e.g. C E G)" />
+            <input type="text" id="text-input" placeholder="Type notes (e.g. C E G)" aria-label="Type notes answer" />
             <button id="btn-submit">Submit Answer</button>
             <button id="btn-reveal" class="btn-secondary" style="margin-left: 0.5rem; display: none;">Reveal Answer</button>
           </div>
@@ -134,7 +134,7 @@ app.innerHTML = `
       </div>
     </div>
     
-    <button id="btn-fullscreen" title="Toggle Fullscreen">⛶</button>
+    <button id="btn-fullscreen" title="Toggle Fullscreen" aria-label="Toggle Fullscreen">⛶</button>
   </div>
 `;
 
@@ -187,7 +187,7 @@ const btnMic = document.getElementById('btn-mic')!;
 const detectedNotesEl = document.getElementById('detected-notes')!;
 
 // Populate Key Select with root notes only
-ALL_ROOTS.forEach(k => {
+ALL_ROOTS.forEach((k) => {
   const opt = document.createElement('option');
   opt.value = k.id;
   opt.text = k.id;
@@ -205,7 +205,7 @@ const textInputHandler = new TextInputHandler((notes) => {
     }
 
     // For sequential drills, if they type a wrong note, clear it.
-    if (drillManager.isSequential && (result === 'incorrect')) {
+    if (drillManager.isSequential && result === 'incorrect') {
       textInput.value = '';
       feedbackEl.textContent = 'Try Again';
       feedbackEl.style.color = '#f44336';
@@ -367,8 +367,8 @@ function getCurrentOctave(): number {
 function renderLesson() {
   const chord = lessonManager.getCurrentChord();
   if (!chord) {
-    lessonNameEl.textContent = "No Chords Available";
-    lessonNotesEl.textContent = "";
+    lessonNameEl.textContent = 'No Chords Available';
+    lessonNotesEl.textContent = '';
     lessonNotation.render([], clefSelect.value as any);
     return;
   }
@@ -383,7 +383,11 @@ function renderLesson() {
   const state = stateManager.getState();
   // Construct VexFlow key signature (e.g., "Eb" for Eb Major, "Ebm" for Eb Minor)
   let keySig = state.selectedKeyId;
-  if (state.selectedMode === 'Minor' || state.selectedMode === 'Harmonic Minor' || state.selectedMode === 'Melodic Minor') {
+  if (
+    state.selectedMode === 'Minor' ||
+    state.selectedMode === 'Harmonic Minor' ||
+    state.selectedMode === 'Melodic Minor'
+  ) {
     keySig += 'm';
   }
   // For other modes (Dorian, Mixolydian), VexFlow doesn't have direct support, so we use the root
@@ -422,7 +426,11 @@ const inputManager = new InputManager((notes) => {
 
 // Initialize Virtual Piano
 const virtualPiano = new VirtualPiano((note, active) => {
-  if (stateManager.getState().module === 'melody' || stateManager.getState().module === 'speed' || stateManager.getState().module === 'interval') {
+  if (
+    stateManager.getState().module === 'melody' ||
+    stateManager.getState().module === 'speed' ||
+    stateManager.getState().module === 'interval'
+  ) {
     // Trigger mode
     if (active) {
       handleDrillInput([note]);
@@ -463,14 +471,14 @@ btnMic.addEventListener('click', async () => {
   if (inputManager.isMicrophoneEnabled()) {
     inputManager.disableMicrophone();
     btnMic.classList.remove('active');
-    btnMic.textContent = "🎤 Enable Mic";
+    btnMic.textContent = '🎤 Enable Mic';
   } else {
     try {
       await inputManager.enableMicrophone();
       btnMic.classList.add('active');
-      btnMic.textContent = "🎤 Mic On";
+      btnMic.textContent = '🎤 Mic On';
     } catch (err) {
-      alert("Could not access microphone. Please check permissions.");
+      alert('Could not access microphone. Please check permissions.');
     }
   }
 });
@@ -483,7 +491,7 @@ function handleDrillInput(notes: NoteName[]): DrillResult | null {
 
     // Visual feedback for Virtual Piano in Trigger Mode
     if (['melody', 'speed', 'interval'].includes(stateManager.getState().module)) {
-      notes.forEach(n => {
+      notes.forEach((n) => {
         // If correct/continue -> Green flash
         // If incorrect -> Red flash
         if (result === 'correct' || result === 'continue') {
@@ -505,31 +513,30 @@ function handleDrillInput(notes: NoteName[]): DrillResult | null {
         const isChordModule = ['triads', 'sevenths'].includes(module);
 
         if (isChordModule) {
-           // For Chords: Play the last note (completion), Pause, then Play Full Chord
-           const lastNote = drillManager.getLastCorrectNote(octave);
-           if (lastNote) {
-             audioManager.playNotes([lastNote], '4n');
-           }
+          // For Chords: Play the last note (completion), Pause, then Play Full Chord
+          const lastNote = drillManager.getLastCorrectNote(octave);
+          if (lastNote) {
+            audioManager.playNotes([lastNote], '4n');
+          }
 
-           // Pause then full chord
-           setTimeout(() => {
-              const pitches = drillManager.getCurrentPitches(octave);
-              console.log(`[Main] Playing full chord after pause: ${pitches}`);
-              audioManager.playNotes(pitches, '2n');
-           }, 600);
+          // Pause then full chord
+          setTimeout(() => {
+            const pitches = drillManager.getCurrentPitches(octave);
+            console.log(`[Main] Playing full chord after pause: ${pitches}`);
+            audioManager.playNotes(pitches, '2n');
+          }, 600);
         } else {
-           // For Melodic/Speed/Interval: Only play the last note (feedback for completion).
-           // Do NOT play the full sequence/chord at the end.
-           const lastNote = drillManager.getLastCorrectNote(octave);
-           if (lastNote) {
-             console.log(`[Main] Playing last note of sequence/drill: ${lastNote}`);
-             audioManager.playNotes([lastNote], '4n');
-           } else {
-             // Fallback if no last note logic (e.g. should not happen usually)
-             audioManager.playCorrect();
-           }
+          // For Melodic/Speed/Interval: Only play the last note (feedback for completion).
+          // Do NOT play the full sequence/chord at the end.
+          const lastNote = drillManager.getLastCorrectNote(octave);
+          if (lastNote) {
+            console.log(`[Main] Playing last note of sequence/drill: ${lastNote}`);
+            audioManager.playNotes([lastNote], '4n');
+          } else {
+            // Fallback if no last note logic (e.g. should not happen usually)
+            audioManager.playCorrect();
+          }
         }
-
       } catch (e) {
         console.error('[Main] Error playing audio feedback:', e);
         audioManager.playCorrect();
@@ -592,7 +599,11 @@ function renderDrillChord() {
 
   // Construct VexFlow key signature (e.g., "Eb" for Eb Major, "Ebm" for Eb Minor)
   let keySig = state.selectedKeyId;
-  if (state.selectedMode === 'Minor' || state.selectedMode === 'Harmonic Minor' || state.selectedMode === 'Melodic Minor') {
+  if (
+    state.selectedMode === 'Minor' ||
+    state.selectedMode === 'Harmonic Minor' ||
+    state.selectedMode === 'Melodic Minor'
+  ) {
     keySig += 'm';
   }
   // Pass the selected key to the notation renderer
@@ -664,7 +675,6 @@ textInput.addEventListener('keydown', (e) => {
   }
 });
 
-
 // Initial Render
 // Initialize lesson manager with default state (reuse initialState from above)
 lessonManager.setKeyContext(initialState.selectedKeyId, initialState.selectedMode);
@@ -679,7 +689,7 @@ nextDrillQuestion();
 const btnFullscreen = document.getElementById('btn-fullscreen');
 btnFullscreen?.addEventListener('click', () => {
   if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen().catch(err => {
+    document.documentElement.requestFullscreen().catch((err) => {
       console.log(`Error attempting to enable fullscreen: ${err.message}`);
     });
   } else {
@@ -745,8 +755,12 @@ document.addEventListener('visibilitychange', async () => {
 });
 
 // Request wake lock on first interaction (similar to audio context)
-document.body.addEventListener('click', async () => {
-  if (!wakeLock) {
-    await requestWakeLock();
-  }
-}, { once: true });
+document.body.addEventListener(
+  'click',
+  async () => {
+    if (!wakeLock) {
+      await requestWakeLock();
+    }
+  },
+  { once: true }
+);

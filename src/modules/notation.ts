@@ -51,22 +51,37 @@ function getKeySignatureAccidentals(keySignature: string): Map<string, string> {
   const accidentals = new Map<string, string>();
 
   const keyAccidentals: Record<string, string[]> = {
-    'C': [], 'Am': [],
-    'G': ['F#'], 'Em': ['F#'],
-    'D': ['F#', 'C#'], 'Bm': ['F#', 'C#'],
-    'A': ['F#', 'C#', 'G#'], 'F#m': ['F#', 'C#', 'G#'],
-    'E': ['F#', 'C#', 'G#', 'D#'], 'C#m': ['F#', 'C#', 'G#', 'D#'],
-    'B': ['F#', 'C#', 'G#', 'D#', 'A#'], 'G#m': ['F#', 'C#', 'G#', 'D#', 'A#'],
-    'F#': ['F#', 'C#', 'G#', 'D#', 'A#', 'E#'], 'D#m': ['F#', 'C#', 'G#', 'D#', 'A#', 'E#'],
-    'C#': ['F#', 'C#', 'G#', 'D#', 'A#', 'E#', 'B#'], 'A#m': ['F#', 'C#', 'G#', 'D#', 'A#', 'E#', 'B#'],
+    C: [],
+    Am: [],
+    G: ['F#'],
+    Em: ['F#'],
+    D: ['F#', 'C#'],
+    Bm: ['F#', 'C#'],
+    A: ['F#', 'C#', 'G#'],
+    'F#m': ['F#', 'C#', 'G#'],
+    E: ['F#', 'C#', 'G#', 'D#'],
+    'C#m': ['F#', 'C#', 'G#', 'D#'],
+    B: ['F#', 'C#', 'G#', 'D#', 'A#'],
+    'G#m': ['F#', 'C#', 'G#', 'D#', 'A#'],
+    'F#': ['F#', 'C#', 'G#', 'D#', 'A#', 'E#'],
+    'D#m': ['F#', 'C#', 'G#', 'D#', 'A#', 'E#'],
+    'C#': ['F#', 'C#', 'G#', 'D#', 'A#', 'E#', 'B#'],
+    'A#m': ['F#', 'C#', 'G#', 'D#', 'A#', 'E#', 'B#'],
 
-    'F': ['Bb'], 'Dm': ['Bb'],
-    'Bb': ['Bb', 'Eb'], 'Gm': ['Bb', 'Eb'],
-    'Eb': ['Bb', 'Eb', 'Ab'], 'Cm': ['Bb', 'Eb', 'Ab'],
-    'Ab': ['Bb', 'Eb', 'Ab', 'Db'], 'Fm': ['Bb', 'Eb', 'Ab', 'Db'],
-    'Db': ['Bb', 'Eb', 'Ab', 'Db', 'Gb'], 'Bbm': ['Bb', 'Eb', 'Ab', 'Db', 'Gb'],
-    'Gb': ['Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb'], 'Ebm': ['Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb'],
-    'Cb': ['Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb', 'Fb'], 'Abm': ['Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb', 'Fb'],
+    F: ['Bb'],
+    Dm: ['Bb'],
+    Bb: ['Bb', 'Eb'],
+    Gm: ['Bb', 'Eb'],
+    Eb: ['Bb', 'Eb', 'Ab'],
+    Cm: ['Bb', 'Eb', 'Ab'],
+    Ab: ['Bb', 'Eb', 'Ab', 'Db'],
+    Fm: ['Bb', 'Eb', 'Ab', 'Db'],
+    Db: ['Bb', 'Eb', 'Ab', 'Db', 'Gb'],
+    Bbm: ['Bb', 'Eb', 'Ab', 'Db', 'Gb'],
+    Gb: ['Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb'],
+    Ebm: ['Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb'],
+    Cb: ['Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb', 'Fb'],
+    Abm: ['Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb', 'Fb'],
   };
 
   const sig = keyAccidentals[keySignature] || [];
@@ -192,7 +207,7 @@ export class NotationRenderer {
     } else {
       // Non-sequential (Chords)
       // Fix enharmonics for chord notes too
-      const spelledNotes = notes.map(n => getVexFlowKey(n, keySignature));
+      const spelledNotes = notes.map((n) => getVexFlowKey(n, keySignature));
 
       const staveNote = new VF.StaveNote({ clef: clef, keys: spelledNotes, duration: 'w' });
 
