@@ -12,7 +12,8 @@ test.describe('Melody Drill Tests', () => {
     await page.click('#nav-drill');
     await page.selectOption('#module-select', 'melody');
     await page.waitForSelector('#key-select', { state: 'visible' });
-    await page.selectOption('#key-select', 'Ebm');
+    await page.selectOption('#key-select', 'Eb');
+    await page.selectOption('#mode-select', 'Minor');
 
     // Check for Off-Screen Notes
     const notation = page.locator('#drill-notation svg');
@@ -24,9 +25,9 @@ test.describe('Melody Drill Tests', () => {
     console.log(`Initial Note Count: ${count}`);
 
     if (count === 0) {
-        console.log("Bug Reproduced: No notes rendered!");
+      console.log("Bug Reproduced: No notes rendered!");
     } else {
-        console.log(`Notes rendered: ${count}`);
+      console.log(`Notes rendered: ${count}`);
     }
 
     // Minimal assertion to ensure test fails if empty

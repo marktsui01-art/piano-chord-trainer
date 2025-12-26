@@ -56,4 +56,9 @@ export default defineConfig({
   server: {
     host: true,
   },
+  /* @type {import('vitest/config').UserConfig} */
+  test: {
+    exclude: ['**/node_modules/**', '**/dist/**', '**/verification/**'],
+    environment: 'jsdom',
+  },
 });
