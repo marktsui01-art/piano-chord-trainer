@@ -161,15 +161,15 @@ export class IntervalDrill implements DrillStrategy {
         // Not necessarily for modes starting on other notes.
         // Let's stick to chromatic logic:
         if (targetChromIdx < startChromIdx && intervalSteps > 0) {
-             // Wrapped around 12
-             // handled by logic above?
-             // targetChromIdx (e.g. 2) < startChromIdx (e.g. 10). Semitones = 4. 10+4 = 14.
-             // targetOctave = start + 1. Correct.
+            // Wrapped around 12
+            // handled by logic above?
+            // targetChromIdx (e.g. 2) < startChromIdx (e.g. 10). Semitones = 4. 10+4 = 14.
+            // targetOctave = start + 1. Correct.
         }
 
         // Special case: Octave (Same note, different octave)
         if (intervalSteps === 7) {
-             this.currentTargetOctave = this.currentStartOctave + 1;
+            this.currentTargetOctave = this.currentStartOctave + 1;
         }
     }
 
@@ -180,9 +180,9 @@ export class IntervalDrill implements DrillStrategy {
             // Try flat equivalent?
             // NoteName type is strict, but let's be safe.
             // We can iterate NOTES_SHARP and check enharmonic
-             for (let i = 0; i < 12; i++) {
-                 if (isEnharmonicMatch(note, NOTES_SHARP[i])) return i;
-             }
+            for (let i = 0; i < 12; i++) {
+                if (isEnharmonicMatch(note, NOTES_SHARP[i])) return i;
+            }
         }
         return idx;
     }
@@ -208,6 +208,7 @@ export class IntervalDrill implements DrillStrategy {
         // Wait, MelodyDrill does: `baseOctave - 4 + this.currentOctaveShift`.
         // My `currentStartOctave` already includes `currentOctaveShift` relative to 4.
         // So I just need to adjust for the `baseOctave` passed in relative to 4.
+
 
         // Actually, if the renderer asks for notes for "Bass Clef" (base 3), and my note is C4.
         // I should return C4.
@@ -249,8 +250,8 @@ export class IntervalDrill implements DrillStrategy {
             return `${this.currentStartNote}${this.currentStartOctave + shift}`;
         }
         if (this.currentIndex === 2) {
-             // We just correctly played the second note
-             return `${this.currentTargetNote}${this.currentTargetOctave + shift}`;
+            // We just correctly played the second note
+            return `${this.currentTargetNote}${this.currentTargetOctave + shift}`;
         }
         return null;
     }
@@ -266,7 +267,7 @@ export class IntervalDrill implements DrillStrategy {
         else if (this.currentIndex === 1) target = this.currentTargetNote;
 
         if (target) {
-             for (const note of inputNotes) {
+            for (const note of inputNotes) {
                 if (isEnharmonicMatch(note, target)) {
                     this.currentIndex++;
                     advanced = true;
