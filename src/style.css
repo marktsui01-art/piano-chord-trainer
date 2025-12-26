@@ -191,7 +191,7 @@ button:focus-visible {
   margin-top: 1rem;
 }
 
-input[type="text"] {
+input[type='text'] {
   padding: 0.6em;
   border-radius: 4px;
   border: 1px solid var(--border-color);
@@ -291,7 +291,7 @@ input[type="text"] {
     /* Minimum touch target size */
   }
 
-  .input-controls input[type="text"] {
+  .input-controls input[type='text'] {
     min-height: 44px;
   }
 }
@@ -440,7 +440,7 @@ input[type="text"] {
   }
 
   .drill-controls-side button,
-  .drill-controls-side input[type="text"] {
+  .drill-controls-side input[type='text'] {
     padding: 0.3em 0.6em;
     font-size: 0.8rem;
     min-height: 32px;

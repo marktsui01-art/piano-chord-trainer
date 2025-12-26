@@ -85,7 +85,7 @@ export class AudioManager {
     if (!this.isLoaded) return;
 
     // Handle enharmonics in note strings (e.g. "Cb4" -> "B3")
-    const mappedNotes = notes.map(note => {
+    const mappedNotes = notes.map((note) => {
       const match = note.match(/^([A-G][#b]?)(.*)$/);
       if (!match) return note;
 

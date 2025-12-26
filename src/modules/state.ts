@@ -21,7 +21,7 @@ export class StateManager {
       mode: 'lesson',
       module: 'triads',
       selectedKeyId: 'C',
-      selectedMode: 'Major'
+      selectedMode: 'Major',
     };
   }
 
@@ -45,16 +45,16 @@ export class StateManager {
 
   public setKey(keyId: string) {
     if (this.state.selectedKeyId !== keyId) {
-        this.state.selectedKeyId = keyId;
-        this.notify();
+      this.state.selectedKeyId = keyId;
+      this.notify();
     }
   }
 
   public setKeyMode(mode: KeyMode) {
-      if (this.state.selectedMode !== mode) {
-          this.state.selectedMode = mode;
-          this.notify();
-      }
+    if (this.state.selectedMode !== mode) {
+      this.state.selectedMode = mode;
+      this.notify();
+    }
   }
 
   public subscribe(listener: StateListener) {
