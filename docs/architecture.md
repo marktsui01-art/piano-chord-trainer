@@ -20,10 +20,15 @@ The Piano Chord Trainer is a Progressive Web Application (PWA) built with Vanill
 *   **Pattern:** Strategy
 *   **Interface:** `DrillStrategy`
 *   **Implementations:**
-    *   `ChordDrill`: Handles 'triads' and 'sevenths'. Supports inversions and variable ranges. Logic validates partial inputs for polyphony.
-    *   `SpeedDrill`: Single note recognition. Ignores octaves for validation (pitch class matching).
-    *   `IntervalDrill`: Sequential input (Start Note -> Target Note). Calculates intervals chromatically or diatonically.
-    *   `MelodyDrill`: Sequential pattern playback. Difficulty scales with score.
+    *   **Shared Capabilities:**
+        *   **Range Management:** Drills respect global range settings (`low`, `high`, `wide`) to constrain generated notes.
+        *   **Key Awareness:** Questions are generated relative to the active Key and Mode (e.g., C Major vs C Minor).
+        *   **Validation Logic:** Most drills validate based on Pitch Class (ignoring octaves), though specific drills may enforce strict voicing or sequences.
+    *   **Implementations:**
+        *   `ChordDrill`: Focuses on harmonies (triads/sevenths). Adds logic for **Inversions** and **Polyphonic Validation** (handling partial inputs).
+        *   `SpeedDrill`: Optimized for rapid, single-note recognition. Pure pitch-class validation.
+        *   `IntervalDrill`: Focuses on relative pitch distance. Enforces **Sequential Input** (Start Note -> Target Note).
+        *   `MelodyDrill`: Focuses on musical memory. Enforces **Sequential Input** and includes **Dynamic Difficulty** scaling.
 *   **Key Logic:**
     *   `getQuestion()`: Generates a new `DrillQuestion`.
     *   `checkAnswer(input)`: Validates input against the current question. Returns `correct`, `incorrect`, or `continue`.

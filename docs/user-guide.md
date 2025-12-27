@@ -17,16 +17,18 @@ Interactive practice with scoring.
 *   **Triads & 7th Chords:**
     *   Identify and play the displayed chord.
     *   **Inversions:** Toggle to practice 1st, 2nd, and 3rd inversions.
-    *   **Polyphonic Input:** Play all notes at once.
+    *   **Feedback:** Plays individual correct notes as you find them. Upon completion, the full chord is played back.
 *   **Speed Note:**
     *   Identify the single note displayed.
-    *   **Goal:** Reaction time. Validation is octave-independent (C4 accepts C3, C5, etc.).
+    *   **Goal:** Reaction time. Validation is octave-independent.
+    *   **Feedback:** Immediate visual feedback. Keys flash **Green** (correct) or **Red** (incorrect).
 *   **Interval Recognition:**
     *   Play the start note, then calculate and play the target note.
-    *   **Chromatic Mode:** Tests intervals on random roots (e.g., Minor 2nd, Tritone).
+    *   **Chromatic Mode:** Tests intervals on random roots.
+    *   **Feedback:** Immediate. Keys flash **Green** (correct) or **Red** (incorrect).
 *   **Melodic Sight-Reading:**
     *   Play a sequence of notes (e.g., C-D-E-F-G).
-    *   **Feedback:** Correct notes flash green; incorrect notes flash red.
+    *   **Feedback:** Immediate. Keys flash **Green** (correct) or **Red** (incorrect).
 
 ## Input Methods
 
