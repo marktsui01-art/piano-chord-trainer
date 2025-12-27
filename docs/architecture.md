@@ -1,0 +1,83 @@
+# System Architecture
+
+## Overview
+
+The Piano Chord Trainer is a Progressive Web Application (PWA) built with Vanilla TypeScript and Vite. It employs a modular architecture using the **Strategy Pattern** for drill logic and the **Observer Pattern** for state management.
+
+## Core Modules
+
+### 1. State Management (`src/modules/state.ts`)
+*   **Pattern:** Observer
+*   **Role:** Central source of truth for the application state.
+*   **State Objects:**
+    *   `mode`: 'lesson' | 'drill'
+    *   `module`: 'triads' | 'sevenths' | 'speed' | 'interval' | 'melody'
+    *   `selectedKeyId`: Root note (e.g., 'C', 'F#')
+    *   `selectedMode`: Scale mode (e.g., 'Major', 'Dorian', 'Chromatic')
+*   **Propagation:** Components subscribe to state changes via `stateManager.subscribe()`.
+
+### 2. Drill System (`src/modules/drills/`)
+*   **Pattern:** Strategy
+*   **Interface:** `DrillStrategy`
+*   **Implementations:**
+    *   `ChordDrill`: Handles 'triads' and 'sevenths'. Supports inversions and variable ranges. Logic validates partial inputs for polyphony.
+    *   `SpeedDrill`: Single note recognition. Ignores octaves for validation (pitch class matching).
+    *   `IntervalDrill`: Sequential input (Start Note -> Target Note). Calculates intervals chromatically or diatonically.
+    *   `MelodyDrill`: Sequential pattern playback. Difficulty scales with score.
+*   **Key Logic:**
+    *   `getQuestion()`: Generates a new `DrillQuestion`.
+    *   `checkAnswer(input)`: Validates input against the current question. Returns `correct`, `incorrect`, or `continue`.
+
+### 3. Input Management (`src/modules/input.ts`)
+*   **Sources:**
+    *   **MIDI:** Via WebMIDI API. Supports polyphonic input.
+    *   **Microphone:** Via `AudioInputManager` (Pitchy). Currently monophonic.
+    *   **Text/Virtual Piano:** Fallback for mouse/keyboard users.
+*   **Normalization:** All inputs are normalized to `NoteName` strings (e.g., "C#", "Bb") before being broadcast.
+
+### 4. Audio Engine (`src/modules/audio.ts`)
+*   **Library:** Tone.js
+*   **Assets:** Salamander Piano samples (cached via SW).
+*   **Feedback:**
+    *   **Sequential Drills:** Plays individual notes as they are hit.
+    *   **Chord Drills:** Plays the final note, pauses (600ms), then plays the full chord upon completion.
+
+### 5. Notation Rendering (`src/modules/notation.ts`)
+*   **Library:** VexFlow
+*   **Dynamic Layout:** Width is calculated dynamically based on note count (`Math.max(400, notes.length * 60 + 200)`).
+*   **Context:** Supports multiple clefs (Treble/Bass) and dynamic key signatures.
+
+## Data Flow
+
+1.  **User Interaction:** User selects a setting (e.g., Key: Eb Minor).
+2.  **State Update:** `StateManager` updates state and notifies subscribers.
+3.  **Propagation:**
+    *   `DrillManager` updates its active strategy context.
+    *   `VirtualPiano` updates its display context (for enharmonic spelling).
+4.  **Game Loop:**
+    *   `DrillManager` requests a new question from the Strategy.
+    *   `NotationRenderer` draws the question.
+    *   `InputManager` captures user input.
+    *   `DrillManager` validates input via Strategy.
+    *   `AudioManager` provides feedback.
+
+## File Structure
+
+```
+src/
+├── main.ts                 # Application Entry Point & UI Controller
+├── modules/
+│   ├── state.ts            # State Manager
+│   ├── drill.ts            # Drill Manager (Facade)
+│   ├── drills/             # Drill Strategies
+│   │   ├── DrillStrategy.ts
+│   │   ├── ChordDrill.ts
+│   │   ├── SpeedDrill.ts
+│   │   ├── IntervalDrill.ts
+│   │   └── MelodyDrill.ts
+│   ├── input.ts            # Input Orchestrator
+│   ├── audio.ts            # Audio Output
+│   ├── audio-input.ts      # Mic Input
+│   ├── notation.ts         # VexFlow Wrapper
+│   └── ...
+```
