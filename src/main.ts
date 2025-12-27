@@ -63,6 +63,7 @@ app.innerHTML = `
                  <option value="Melodic Minor">Melodic Minor</option>
                  <option value="Dorian">Dorian</option>
                  <option value="Mixolydian">Mixolydian</option>
+                 <option value="Chromatic">Chromatic</option>
              </select>
           </div>
       </div>
@@ -232,10 +233,22 @@ function updateUI(state: AppState) {
     // Show key settings in lesson mode now (User Requirement)
     keySettings.style.display = 'block';
 
-    if (['triads', 'sevenths', 'melody'].includes(state.module)) {
+    if (['triads', 'sevenths', 'melody', 'speed', 'interval'].includes(state.module)) {
       modeSelectContainer.style.display = 'inline-block';
     } else {
       modeSelectContainer.style.display = 'none';
+    }
+
+    // Toggle Chromatic option visibility based on module
+    const chromaticOption = modeSelect.querySelector('option[value="Chromatic"]');
+    if (chromaticOption) {
+      if (['speed', 'interval'].includes(state.module)) {
+        (chromaticOption as HTMLOptionElement).style.display = 'block';
+        (chromaticOption as HTMLOptionElement).disabled = false;
+      } else {
+        (chromaticOption as HTMLOptionElement).style.display = 'none';
+        (chromaticOption as HTMLOptionElement).disabled = true;
+      }
     }
 
     renderLesson();
@@ -248,10 +261,22 @@ function updateUI(state: AppState) {
 
     keySettings.style.display = 'block';
 
-    if (['triads', 'sevenths', 'melody'].includes(state.module)) {
+    if (['triads', 'sevenths', 'melody', 'speed', 'interval'].includes(state.module)) {
       modeSelectContainer.style.display = 'inline-block';
     } else {
       modeSelectContainer.style.display = 'none';
+    }
+
+    // Toggle Chromatic option visibility based on module
+    const chromaticOption = modeSelect.querySelector('option[value="Chromatic"]');
+    if (chromaticOption) {
+      if (['speed', 'interval'].includes(state.module)) {
+        (chromaticOption as HTMLOptionElement).style.display = 'block';
+        (chromaticOption as HTMLOptionElement).disabled = false;
+      } else {
+        (chromaticOption as HTMLOptionElement).style.display = 'none';
+        (chromaticOption as HTMLOptionElement).disabled = true;
+      }
     }
 
     // Set Piano Interaction Mode
@@ -287,6 +312,15 @@ navDrill.addEventListener('click', () => stateManager.setMode('drill'));
 
 moduleSelect.addEventListener('change', (e) => {
   const module = (e.target as HTMLSelectElement).value as ChordModule;
+
+  // Safety check: If switching to a module that doesn't support Chromatic, reset to Major
+  const currentState = stateManager.getState();
+  if (currentState.selectedMode === 'Chromatic' && !['speed', 'interval'].includes(module)) {
+    stateManager.setKeyMode('Major');
+    // Update select UI immediately to reflect change
+    modeSelect.value = 'Major';
+  }
+
   stateManager.setModule(module);
   lessonManager.setModule(module);
   drillManager.setModule(module);
