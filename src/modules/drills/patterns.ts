@@ -29,7 +29,10 @@ function getNoteFromScale(
   scaleIndex: number,
   rootOctave: number
 ): { name: NoteName; octave: number } {
-  const note = scale[scaleIndex % 7];
+  // Use positive modulo to handle indices below the root
+  const index = ((scaleIndex % 7) + 7) % 7;
+  const note = scale[index];
+
   // Calculate octave shift based on how many times we wrapped around the 7-note scale
   const octaveOffset = Math.floor(scaleIndex / 7);
   return { name: note, octave: rootOctave + octaveOffset };
