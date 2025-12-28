@@ -49,6 +49,8 @@ npx playwright test
 Custom verification scripts reside in `verification/`. These are often used for visual regression or feature confirmation.
 *   `mode_selector.spec.ts`: Verifies logic for hiding/showing controls based on the selected drill.
 *   `test_drills.spec.ts`: Verifies drill rendering and input handling.
+*   `feature_lesson_mode.spec.ts`: Verifies lesson mode functionality.
+*   `feature_navigation.spec.ts`: Verifies navigation between lesson and drill modes.
 
 ## Build & Deployment
 
