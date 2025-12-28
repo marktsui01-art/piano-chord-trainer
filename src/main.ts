@@ -108,6 +108,11 @@ app.innerHTML = `
 
       <div class="drill-right-panel">
         <div class="drill-controls-side">
+          <div class="virtual-piano-controls">
+             <button id="btn-toggle-piano" class="btn-secondary">🎹 Show Piano</button>
+          </div>
+          <div id="virtual-piano-container" style="display: none;"></div>
+          
           <div class="interaction-area">
             <div id="question-text">Press Start to Begin</div>
             <div id="feedback-text" class="feedback-text"></div>
@@ -120,11 +125,6 @@ app.innerHTML = `
             <button id="btn-reveal" class="btn-secondary" style="margin-left: 0.5rem; display: none;">Reveal Answer</button>
           </div>
 
-          <div class="virtual-piano-controls">
-             <button id="btn-toggle-piano" class="btn-secondary">🎹 Show Piano</button>
-          </div>
-          <div id="virtual-piano-container" style="display: none;"></div>
-          
           <div class="mic-controls">
             <button id="btn-mic" class="btn-mic">🎤 Enable Mic</button>
             <div id="input-monitor" class="input-monitor">Detected: <span id="detected-notes"></span></div>
