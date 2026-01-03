@@ -94,9 +94,5 @@ export function generateDiatonicChords(
     });
   }
 
-  // Post-processing to fix qualities for standard modes if we want better UI labels immediately?
-  // Let's leave it simple for now as requested: Decouple Key/Mode.
-  // The chords are musically correct in terms of constituent notes.
-
   return chords;
 }
