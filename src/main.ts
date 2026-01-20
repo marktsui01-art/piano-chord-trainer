@@ -10,6 +10,7 @@ import { ALL_ROOTS, KeyMode } from './modules/keys';
 import { StateManager, AppState, ChordModule } from './modules/state';
 import { LessonManager } from './modules/lesson';
 import { TextInputHandler } from './modules/TextInputHandler';
+import { RhythmGame } from './modules/rhythm-game';
 import './pwa';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
@@ -38,6 +39,7 @@ app.innerHTML = `
           <option value="speed">Speed Note Drill</option>
           <option value="interval">Interval Recognition</option>
           <option value="melody">Melodic Sight-Reading</option>
+          <option value="rhythm">Polyrhythm (2 vs 3)</option>
         </select>
         
         <div class="clef-selector-container" style="margin-left: 1rem; display: inline-block;">
@@ -104,7 +106,25 @@ app.innerHTML = `
 
     <!-- Drill Mode UI -->
     <div id="drill-container" class="mode-container">
+      <!-- Standard Drill Views -->
       <div id="drill-notation" class="notation-box"></div>
+
+      <!-- Rhythm Game View -->
+      <div id="rhythm-container" style="display: none; width: 100%; flex-direction: column; align-items: center;">
+        <canvas id="rhythm-canvas" style="width: 100%; height: 300px; background: #222; border-radius: 8px; margin-bottom: 1rem;"></canvas>
+        <div class="rhythm-controls" style="display: flex; gap: 1rem; align-items: center; justify-content: center; width: 100%;">
+          <button id="btn-rhythm-left" class="btn-secondary" style="min-width: 100px; height: 100px; font-size: 1.2rem;">Left Hand (A)</button>
+          <div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: center;">
+              <button id="btn-rhythm-start" class="btn-primary">Start</button>
+              <button id="btn-rhythm-stop" class="btn-secondary">Stop</button>
+              <label style="margin-top: 0.5rem; color: #fff; cursor: pointer;">
+                  <input type="checkbox" id="chk-rhythm-metronome" checked> Metronome
+              </label>
+              <div id="rhythm-score-display" style="font-size: 1.2rem; font-weight: bold; margin-top: 0.5rem;">Score: 0</div>
+          </div>
+          <button id="btn-rhythm-right" class="btn-secondary" style="min-width: 100px; height: 100px; font-size: 1.2rem;">Right Hand (L)</button>
+        </div>
+      </div>
 
       <div class="drill-right-panel">
         <div class="drill-controls-side">
@@ -155,6 +175,8 @@ const audioManager = new AudioManager(() => {
   }
 });
 
+const rhythmGame = new RhythmGame(audioManager);
+
 // We need two notation renderers because they are in different divs and might need different sizes/contexts
 const lessonNotation = new NotationRenderer('lesson-notation');
 const drillNotation = new NotationRenderer('drill-notation');
@@ -173,6 +195,16 @@ const drillContainer = document.getElementById('drill-container')!;
 const drillSettings = document.getElementById('drill-settings')!;
 const chkInversions = document.getElementById('chk-inversions') as HTMLInputElement;
 const rangeSelect = document.getElementById('range-select') as HTMLSelectElement;
+
+// Rhythm UI
+const rhythmContainer = document.getElementById('rhythm-container')!;
+const drillNotationEl = document.getElementById('drill-notation')!;
+const drillRightPanel = document.querySelector('.drill-right-panel') as HTMLElement;
+const btnRhythmStart = document.getElementById('btn-rhythm-start')!;
+const btnRhythmStop = document.getElementById('btn-rhythm-stop')!;
+const btnRhythmLeft = document.getElementById('btn-rhythm-left')!;
+const btnRhythmRight = document.getElementById('btn-rhythm-right')!;
+const chkRhythmMetronome = document.getElementById('chk-rhythm-metronome') as HTMLInputElement;
 
 // Lesson UI
 const lessonNameEl = document.getElementById('lesson-chord-name')!;
@@ -279,18 +311,32 @@ function updateUI(state: AppState) {
       }
     }
 
-    // Set Piano Interaction Mode
-    // For melodic/speed/interval drills -> trigger
-    // For Chords -> toggle
-    if (['melody', 'speed', 'interval'].includes(state.module)) {
-      virtualPiano.setInteractionType('trigger');
+    // Handle Rhythm Module UI vs Standard Drill UI
+    if (state.module === 'rhythm') {
+      rhythmContainer.style.display = 'flex';
+      drillNotationEl.style.display = 'none';
+      drillRightPanel.style.display = 'none';
+      drillSettings.style.display = 'none'; // Rhythm has own settings (none for now) or reuse
+      rhythmGame.init('rhythm-canvas');
     } else {
-      virtualPiano.setInteractionType('toggle');
-    }
+      rhythmContainer.style.display = 'none';
+      drillNotationEl.style.display = 'block';
+      drillRightPanel.style.display = 'block';
+      rhythmGame.stop(); // Ensure rhythm game stops if we switch away
 
-    // Re-render drill chord if switching to drill mode
-    const chord = drillManager.getCurrentChord();
-    if (chord) renderDrillChord();
+      // Set Piano Interaction Mode
+      // For melodic/speed/interval drills -> trigger
+      // For Chords -> toggle
+      if (['melody', 'speed', 'interval'].includes(state.module)) {
+        virtualPiano.setInteractionType('trigger');
+      } else {
+        virtualPiano.setInteractionType('toggle');
+      }
+
+      // Re-render drill chord if switching to drill mode
+      const chord = drillManager.getCurrentChord();
+      if (chord) renderDrillChord();
+    }
   }
 
   // Show/Hide Reveal Button
@@ -645,6 +691,34 @@ function renderDrillChord() {
 }
 
 document.getElementById('btn-next-drill')?.addEventListener('click', nextDrillQuestion);
+
+// Rhythm Controls
+btnRhythmStart.addEventListener('click', () => rhythmGame.start());
+btnRhythmStop.addEventListener('click', () => rhythmGame.stop());
+
+chkRhythmMetronome.addEventListener('change', () => {
+    rhythmGame.setMetronome(chkRhythmMetronome.checked);
+});
+
+const handleRhythmInput = (hand: 'left' | 'right') => {
+  rhythmGame.handleInput(hand);
+};
+
+btnRhythmLeft.addEventListener('mousedown', () => handleRhythmInput('left'));
+btnRhythmLeft.addEventListener('touchstart', (e) => { e.preventDefault(); handleRhythmInput('left'); });
+btnRhythmRight.addEventListener('mousedown', () => handleRhythmInput('right'));
+btnRhythmRight.addEventListener('touchstart', (e) => { e.preventDefault(); handleRhythmInput('right'); });
+
+// Global Key Handler for Rhythm
+document.addEventListener('keydown', (e) => {
+  if (stateManager.getState().module === 'rhythm') {
+    if (e.key.toLowerCase() === 'a') {
+      handleRhythmInput('left');
+    } else if (e.key.toLowerCase() === 'l') {
+      handleRhythmInput('right');
+    }
+  }
+});
 
 // Handle Text Input Submission (Legacy button still works, but textInputHandler handles typing)
 const submitAnswer = () => {

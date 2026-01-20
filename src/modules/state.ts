@@ -1,7 +1,7 @@
 import { KeyMode } from './keys';
 
 export type AppMode = 'lesson' | 'drill';
-export type ChordModule = 'triads' | 'sevenths' | 'speed' | 'interval' | 'melody';
+export type ChordModule = 'triads' | 'sevenths' | 'speed' | 'interval' | 'melody' | 'rhythm';
 
 export interface AppState {
   mode: AppMode;

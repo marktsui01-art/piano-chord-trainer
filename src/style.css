@@ -61,6 +61,26 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+}
+
+.btn-secondary {
+  background-color: #333;
+  color: white;
+  border: 1px solid #555;
+}
+
+.btn-secondary:hover {
+  background-color: #444;
+}
+
 /* Navigation */
 .nav-bar {
   display: flex;
