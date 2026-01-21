@@ -4,10 +4,13 @@ import { NoteName } from './content';
 export class AudioManager {
   private sampler: Tone.Sampler;
   private feedbackSynth: Tone.Synth;
+  private rhythmSynth: Tone.MembraneSynth;
   private isLoaded: boolean = false;
 
   constructor(onLoad?: () => void) {
     this.feedbackSynth = new Tone.Synth().toDestination();
+    this.rhythmSynth = new Tone.MembraneSynth().toDestination();
+    this.rhythmSynth.volume.value = -10;
 
     this.sampler = new Tone.Sampler({
       urls: {
@@ -112,5 +115,9 @@ export class AudioManager {
 
   public playIncorrect() {
     this.feedbackSynth.triggerAttackRelease('G2', '4n');
+  }
+
+  public playDrum(note: string = 'C2', duration: string = '8n') {
+    this.rhythmSynth.triggerAttackRelease(note, duration);
   }
 }
