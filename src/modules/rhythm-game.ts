@@ -18,8 +18,6 @@ export class RhythmGame {
   // If we want 60 BPM for the quarter note, and 2 beats per measure -> 2 seconds.
 
   // State
-  private lastHitLeft = -1;
-  private lastHitRight = -1;
   private score = 0;
   private attempts = 0;
 
@@ -27,7 +25,6 @@ export class RhythmGame {
   private noteRadius = 15;
   private trackHeight = 100;
   private targetX = 100; // X position of the hit target
-  private lookahead = 2; // How many seconds ahead to show notes
   private speed = 200; // Pixels per second
 
   // Feedback
@@ -80,14 +77,14 @@ export class RhythmGame {
     if (this.metronomeEnabled) {
       // Left Hand (Low Drum)
       this.leftRhythm.forEach((pos) => {
-        Tone.Transport.schedule((time) => {
+        Tone.Transport.schedule((_time) => {
           this.audioManager.playDrum('C2', '16n');
         }, pos * this.loopDuration);
       });
 
       // Right Hand (High Drum/Click)
       this.rightRhythm.forEach((pos) => {
-        Tone.Transport.schedule((time) => {
+        Tone.Transport.schedule((_time) => {
           this.audioManager.playDrum('G2', '16n');
         }, pos * this.loopDuration);
       });
@@ -109,7 +106,6 @@ export class RhythmGame {
   public handleInput(hand: 'left' | 'right') {
     if (!this.isRunning) return;
 
-    const transportTime = Tone.Transport.seconds; // Current position in loop (0 to loopDuration)
     // Tone.Transport.seconds is actually total time. We want loop position.
     // Tone.Transport.position gives bars:quarters:sixteenths.
     // We can use Tone.Transport.progress (0-1) * loopDuration.
