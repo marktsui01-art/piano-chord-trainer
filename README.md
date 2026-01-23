@@ -2,6 +2,8 @@
 
 A comprehensive web-based tool for intermediate piano players to master chords, intervals, and sight-reading.
 
+[**Live Demo**](https://marktsui01-art.github.io/piano-chord-trainer/)
+
 ![Piano Chord Trainer Screenshot](public/app-screenshot.png)
 
 ## Documentation
@@ -26,7 +28,7 @@ A comprehensive web-based tool for intermediate piano players to master chords, 
 
 ## Features
 
-*   **Multiple Modes:** Chord identification, Speed drills, Interval recognition, and Melodic sight-reading.
+*   **Multiple Modes:** Chord identification, Speed drills, Interval recognition, Melodic sight-reading, and Polyrhythm (2 vs 3) training.
 *   **Flexible Inputs:** MIDI, Microphone (Audio), and Text/Virtual Piano.
 *   **Theory Engine:** Supports all keys, modes (Major/Minor/Dorian/etc.), and inversions.
 *   **PWA:** Installable with offline support.
