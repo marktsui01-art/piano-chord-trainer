@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.0] - Feature Update
+
+### Added
+*   **Rhythm Game:**
+    *   New **Polyrhythm (2 vs 3)** module.
+    *   Visual "Falling Notes" rhythm display.
+    *   Interactive controls (Left Hand 'A' / Right Hand 'L') and Metronome.
+*   **Settings:**
+    *   **Clef Selector:** Toggle between Treble and Bass clef for all drills.
+    *   **Range Control:** Granular range options (Normal, Low, High, Wide).
+*   **Inputs:**
+    *   **Microphone Support:** Enabled monophonic pitch detection via `pitchy`.
+
 ## [1.0.0] - Alpha
 
 ### Added

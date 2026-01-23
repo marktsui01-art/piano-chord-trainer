@@ -29,6 +29,11 @@ Interactive practice with scoring.
 *   **Melodic Sight-Reading:**
     *   Play a sequence of notes (e.g., C-D-E-F-G).
     *   **Feedback:** Immediate. Keys flash **Green** (correct) or **Red** (incorrect).
+*   **Polyrhythm (2 vs 3):**
+    *   Practice the "2 against 3" rhythm.
+    *   **Goal:** Tap the Left Hand (2 beats) and Right Hand (3 beats) in time with the falling notes.
+    *   **Controls:** 'A' key (Left) and 'L' key (Right), or on-screen buttons.
+    *   **Metronome:** Toggleable audible guide.
 
 ## Input Methods
 

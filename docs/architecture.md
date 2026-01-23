@@ -33,6 +33,14 @@ The Piano Chord Trainer is a Progressive Web Application (PWA) built with Vanill
     *   `getQuestion()`: Generates a new `DrillQuestion`.
     *   `checkAnswer(input)`: Validates input against the current question. Returns `correct`, `incorrect`, or `continue`.
 
+### 2a. Rhythm System (`src/modules/rhythm-game.ts`)
+*   **Role:** Handles the Polyrhythm module logic.
+*   **Architecture:** Standalone class that manages its own Canvas loop and Tone.js Transport.
+*   **Logic:**
+    *   Uses `Tone.Transport` for timing (Metronome & Scoring).
+    *   Renders a "Falling Notes" visualizer on an HTML5 Canvas.
+    *   Validates input timing against a defined loop duration (e.g., 2s) with tolerance.
+
 ### 3. Input Management (`src/modules/input.ts`)
 *   **Sources:**
     *   **MIDI:** Via WebMIDI API. Supports polyphonic input.
@@ -80,6 +88,7 @@ src/
 │   │   ├── SpeedDrill.ts
 │   │   ├── IntervalDrill.ts
 │   │   └── MelodyDrill.ts
+│   ├── rhythm-game.ts      # Polyrhythm Logic
 │   ├── input.ts            # Input Orchestrator
 │   ├── audio.ts            # Audio Output
 │   ├── audio-input.ts      # Mic Input
