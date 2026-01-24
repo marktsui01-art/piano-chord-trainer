@@ -112,17 +112,48 @@ app.innerHTML = `
       <!-- Rhythm Game View -->
       <div id="rhythm-container" style="display: none; width: 100%; flex-direction: column; align-items: center;">
         <canvas id="rhythm-canvas" style="width: 100%; height: 300px; background: #222; border-radius: 8px; margin-bottom: 1rem;"></canvas>
-        <div class="rhythm-controls" style="display: flex; gap: 1rem; align-items: center; justify-content: center; width: 100%;">
-          <button id="btn-rhythm-left" class="btn-secondary" style="min-width: 100px; height: 100px; font-size: 1.2rem;">Left Hand (A)</button>
-          <div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: center;">
-              <button id="btn-rhythm-start" class="btn-primary">Start</button>
-              <button id="btn-rhythm-stop" class="btn-secondary">Stop</button>
-              <label style="margin-top: 0.5rem; color: #fff; cursor: pointer;">
-                  <input type="checkbox" id="chk-rhythm-metronome" checked> Metronome
-              </label>
-              <div id="rhythm-score-display" style="font-size: 1.2rem; font-weight: bold; margin-top: 0.5rem;">Score: 0</div>
-          </div>
-          <button id="btn-rhythm-right" class="btn-secondary" style="min-width: 100px; height: 100px; font-size: 1.2rem;">Right Hand (L)</button>
+
+        <div class="rhythm-controls-panel">
+            <!-- Left Hand Buttons -->
+            <div class="rhythm-hand-group">
+                <h3>Left Hand</h3>
+                <div class="rhythm-btn-row">
+                    <button id="btn-rhythm-l0" class="btn-rhythm btn-rhythm-l0" aria-label="Left A">A</button>
+                    <button id="btn-rhythm-l1" class="btn-rhythm btn-rhythm-l1" aria-label="Left S">S</button>
+                    <button id="btn-rhythm-l2" class="btn-rhythm btn-rhythm-l2" aria-label="Left D">D</button>
+                </div>
+            </div>
+
+            <!-- Game Controls -->
+            <div class="rhythm-main-controls">
+                <div id="rhythm-score-display">Score: 0</div>
+
+                <button id="btn-rhythm-start" class="btn-primary" style="width: 100%;">Start</button>
+                <button id="btn-rhythm-stop" class="btn-secondary" style="width: 100%;">Stop</button>
+
+                <div class="rhythm-settings">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="chk-rhythm-demo"> Demo Mode
+                    </label>
+                    <div class="setting-row">
+                        <label for="sel-rhythm-diff">Level:</label>
+                        <select id="sel-rhythm-diff" class="module-select" style="padding: 0.2rem; flex: 1;">
+                            <option value="easy">Easy (1)</option>
+                            <option value="hard">Hard (3)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Hand Buttons -->
+            <div class="rhythm-hand-group">
+                <h3>Right Hand</h3>
+                <div class="rhythm-btn-row">
+                    <button id="btn-rhythm-r0" class="btn-rhythm btn-rhythm-r0" aria-label="Right J">J</button>
+                    <button id="btn-rhythm-r1" class="btn-rhythm btn-rhythm-r1" aria-label="Right K">K</button>
+                    <button id="btn-rhythm-r2" class="btn-rhythm btn-rhythm-r2" aria-label="Right L">L</button>
+                </div>
+            </div>
         </div>
       </div>
 
@@ -202,9 +233,18 @@ const drillNotationEl = document.getElementById('drill-notation')!;
 const drillRightPanel = document.querySelector('.drill-right-panel') as HTMLElement;
 const btnRhythmStart = document.getElementById('btn-rhythm-start')!;
 const btnRhythmStop = document.getElementById('btn-rhythm-stop')!;
-const btnRhythmLeft = document.getElementById('btn-rhythm-left')!;
-const btnRhythmRight = document.getElementById('btn-rhythm-right')!;
-const chkRhythmMetronome = document.getElementById('chk-rhythm-metronome') as HTMLInputElement;
+
+// Settings
+const chkRhythmDemo = document.getElementById('chk-rhythm-demo') as HTMLInputElement;
+const selRhythmDiff = document.getElementById('sel-rhythm-diff') as HTMLSelectElement;
+
+// Buttons
+const btnRhythmL0 = document.getElementById('btn-rhythm-l0')!;
+const btnRhythmL1 = document.getElementById('btn-rhythm-l1')!;
+const btnRhythmL2 = document.getElementById('btn-rhythm-l2')!;
+const btnRhythmR0 = document.getElementById('btn-rhythm-r0')!;
+const btnRhythmR1 = document.getElementById('btn-rhythm-r1')!;
+const btnRhythmR2 = document.getElementById('btn-rhythm-r2')!;
 
 // Lesson UI
 const lessonNameEl = document.getElementById('lesson-chord-name')!;
@@ -316,7 +356,7 @@ function updateUI(state: AppState) {
       rhythmContainer.style.display = 'flex';
       drillNotationEl.style.display = 'none';
       drillRightPanel.style.display = 'none';
-      drillSettings.style.display = 'none'; // Rhythm has own settings (none for now) or reuse
+      drillSettings.style.display = 'none'; // Rhythm has own settings
       rhythmGame.init('rhythm-canvas');
     } else {
       rhythmContainer.style.display = 'none';
@@ -696,27 +736,48 @@ document.getElementById('btn-next-drill')?.addEventListener('click', nextDrillQu
 btnRhythmStart.addEventListener('click', () => rhythmGame.start());
 btnRhythmStop.addEventListener('click', () => rhythmGame.stop());
 
-chkRhythmMetronome.addEventListener('change', () => {
-    rhythmGame.setMetronome(chkRhythmMetronome.checked);
+chkRhythmDemo.addEventListener('change', () => {
+    rhythmGame.setDemoMode(chkRhythmDemo.checked);
 });
 
-const handleRhythmInput = (hand: 'left' | 'right') => {
-  rhythmGame.handleInput(hand);
+selRhythmDiff.addEventListener('change', () => {
+    rhythmGame.setDifficulty(selRhythmDiff.value as 'easy' | 'hard');
+});
+
+const handleRhythmInput = (hand: 'left' | 'right', lane: number) => {
+  rhythmGame.handleInput(hand, lane);
 };
 
-btnRhythmLeft.addEventListener('mousedown', () => handleRhythmInput('left'));
-btnRhythmLeft.addEventListener('touchstart', (e) => { e.preventDefault(); handleRhythmInput('left'); });
-btnRhythmRight.addEventListener('mousedown', () => handleRhythmInput('right'));
-btnRhythmRight.addEventListener('touchstart', (e) => { e.preventDefault(); handleRhythmInput('right'); });
+// Bind Buttons
+// Use helper to bind mouse/touch
+const bindRhythmBtn = (btn: HTMLElement, hand: 'left' | 'right', lane: number) => {
+    btn.addEventListener('mousedown', () => handleRhythmInput(hand, lane));
+    btn.addEventListener('touchstart', (e) => { e.preventDefault(); handleRhythmInput(hand, lane); });
+};
+
+bindRhythmBtn(btnRhythmL0, 'left', 0);
+bindRhythmBtn(btnRhythmL1, 'left', 1);
+bindRhythmBtn(btnRhythmL2, 'left', 2);
+
+bindRhythmBtn(btnRhythmR0, 'right', 0);
+bindRhythmBtn(btnRhythmR1, 'right', 1);
+bindRhythmBtn(btnRhythmR2, 'right', 2);
+
 
 // Global Key Handler for Rhythm
 document.addEventListener('keydown', (e) => {
   if (stateManager.getState().module === 'rhythm') {
-    if (e.key.toLowerCase() === 'a') {
-      handleRhythmInput('left');
-    } else if (e.key.toLowerCase() === 'l') {
-      handleRhythmInput('right');
-    }
+    const k = e.key.toLowerCase();
+
+    // Left Hand
+    if (k === 'a') handleRhythmInput('left', 0);
+    if (k === 's') handleRhythmInput('left', 1);
+    if (k === 'd') handleRhythmInput('left', 2);
+
+    // Right Hand
+    if (k === 'j') handleRhythmInput('right', 0);
+    if (k === 'k') handleRhythmInput('right', 1);
+    if (k === 'l') handleRhythmInput('right', 2);
   }
 });
 
