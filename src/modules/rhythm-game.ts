@@ -1,6 +1,11 @@
 import * as Tone from 'tone';
 import { AudioManager } from './audio';
 
+type RhythmNote = {
+  time: number; // 0 to 1 (relative to loop)
+  lane: number; // 0, 1, 2
+};
+
 export class RhythmGame {
   private isRunning: boolean = false;
   private canvas: HTMLCanvasElement | null = null;
@@ -10,12 +15,15 @@ export class RhythmGame {
   private metronomeEnabled: boolean = true;
   private resizeListener: (() => void) | null = null;
 
-  // Rhythm Configuration (2 vs 3)
-  // Positions are relative to the loop duration (0 to 1)
-  private leftRhythm = [0, 0.5]; // 2 beats
-  private rightRhythm = [0, 1 / 3, 2 / 3]; // 3 beats
-  private loopDuration = 2; // seconds per measure (30 BPM equivalent for the measure, or 60BPM for the beat unit?)
-  // If we want 60 BPM for the quarter note, and 2 beats per measure -> 2 seconds.
+  // Configuration
+  private difficulty: 'easy' | 'hard' = 'easy';
+  private demoMode: boolean = false;
+
+  // Patterns
+  private leftPattern: RhythmNote[] = [];
+  private rightPattern: RhythmNote[] = [];
+
+  private loopDuration = 2; // seconds per measure
 
   // State
   private score = 0;
@@ -23,19 +31,47 @@ export class RhythmGame {
 
   // Visuals
   private noteRadius = 15;
-  private trackHeight = 100;
+  private trackHeight = 120; // Height allocated for one track (hand)
   private targetX = 100; // X position of the hit target
   private speed = 200; // Pixels per second
 
   // Feedback
   private feedbacks: { x: number; y: number; text: string; color: string; life: number }[] = [];
 
+  // Colors
+  private leftColors = ['#2196F3', '#03A9F4', '#00BCD4']; // Blue shades
+  private rightColors = ['#F44336', '#FF9800', '#FFC107']; // Red/Orange/Yellow
+
   constructor(audioManager: AudioManager) {
     this.audioManager = audioManager;
+    this.updatePatterns();
   }
 
   public setMetronome(enabled: boolean) {
     this.metronomeEnabled = enabled;
+  }
+
+  public setDifficulty(level: 'easy' | 'hard') {
+    this.difficulty = level;
+    this.updatePatterns();
+  }
+
+  public setDemoMode(enabled: boolean) {
+    this.demoMode = enabled;
+  }
+
+  private updatePatterns() {
+    if (this.difficulty === 'easy') {
+      // Easy: All lane 0
+      this.leftPattern = [{ time: 0, lane: 0 }, { time: 0.5, lane: 0 }];
+      this.rightPattern = [{ time: 0, lane: 0 }, { time: 1 / 3, lane: 0 }, { time: 2 / 3, lane: 0 }];
+    } else {
+      // Hard: Distributed lanes
+      // Left (2 beats): Lane 0, Lane 1
+      this.leftPattern = [{ time: 0, lane: 0 }, { time: 0.5, lane: 1 }];
+      // Right (3 beats): Lane 0, Lane 1, Lane 2
+      this.rightPattern = [{ time: 0, lane: 0 }, { time: 1 / 3, lane: 1 }, { time: 2 / 3, lane: 2 }];
+    }
   }
 
   public init(canvasId: string) {
@@ -53,7 +89,7 @@ export class RhythmGame {
   private resize() {
     if (this.canvas && this.canvas.parentElement) {
       this.canvas.width = this.canvas.parentElement.clientWidth;
-      this.canvas.height = 300; // Fixed height for 2 tracks
+      this.canvas.height = 350; // Increased height for lanes
     }
   }
 
@@ -66,27 +102,34 @@ export class RhythmGame {
 
     // Set Loop
     Tone.Transport.bpm.value = 60; // Base BPM
-    // We treat 1 measure as the cycle of the polyrhythm (LCM of 2 and 3 = 6 beats conceptually, or just 1 measure split)
-    // Let's say 1 measure = 2 seconds.
     this.loopDuration = 2;
     Tone.Transport.loop = true;
     Tone.Transport.loopStart = 0;
     Tone.Transport.loopEnd = this.loopDuration;
 
-    // Schedule audio clicks for the rhythm (Metronome / Guide)
-    if (this.metronomeEnabled) {
-      // Left Hand (Low Drum)
-      this.leftRhythm.forEach((pos) => {
+    // Schedule Guide / Metronome
+    if (this.metronomeEnabled || this.demoMode) {
+      // Left Hand
+      this.leftPattern.forEach((note) => {
         Tone.Transport.schedule((_time) => {
-          this.audioManager.playDrum('C2', '16n');
-        }, pos * this.loopDuration);
+          if (this.demoMode) {
+             this.audioManager.playRankedNote('left', note.lane as any, '16n');
+          } else if (this.metronomeEnabled) {
+             // Simple click for metronome
+             this.audioManager.playDrum('C2', '16n');
+          }
+        }, note.time * this.loopDuration);
       });
 
-      // Right Hand (High Drum/Click)
-      this.rightRhythm.forEach((pos) => {
+      // Right Hand
+      this.rightPattern.forEach((note) => {
         Tone.Transport.schedule((_time) => {
-          this.audioManager.playDrum('G2', '16n');
-        }, pos * this.loopDuration);
+          if (this.demoMode) {
+             this.audioManager.playRankedNote('right', note.lane as any, '16n');
+          } else if (this.metronomeEnabled) {
+             this.audioManager.playDrum('G2', '16n');
+          }
+        }, note.time * this.loopDuration);
       });
     }
 
@@ -103,26 +146,30 @@ export class RhythmGame {
     cancelAnimationFrame(this.animationId);
   }
 
-  public handleInput(hand: 'left' | 'right') {
+  public handleInput(hand: 'left' | 'right', lane: number = 0) {
     if (!this.isRunning) return;
 
-    // Tone.Transport.seconds is actually total time. We want loop position.
-    // Tone.Transport.position gives bars:quarters:sixteenths.
-    // We can use Tone.Transport.progress (0-1) * loopDuration.
+    // In easy mode, ignore lane (treat all input as 0 to match pattern)
+    // Actually pattern has lane 0. So mapping input to 0 works.
+    const effectiveInputLane = this.difficulty === 'easy' ? 0 : lane;
+
+    // Tone.Transport.progress (0-1) * loopDuration.
     const currentTime = Tone.Transport.progress * this.loopDuration;
 
-    const rhythm = hand === 'left' ? this.leftRhythm : this.rightRhythm;
-    const tolerance = 0.15; // 150ms window (generous)
+    const pattern = hand === 'left' ? this.leftPattern : this.rightPattern;
+    const tolerance = 0.15; // 150ms window
 
-    // Check closest target
+    // Check closest target in the specific lane
     let hit = false;
     let bestDiff = Infinity;
 
-    for (const pos of rhythm) {
-      const targetTime = pos * this.loopDuration;
+    for (const note of pattern) {
+      if (note.lane !== effectiveInputLane) continue;
+
+      const targetTime = note.time * this.loopDuration;
       let diff = Math.abs(currentTime - targetTime);
 
-      // Handle wrap-around (e.g. hit at 1.9s for target 0.0s)
+      // Handle wrap-around
       if (diff > this.loopDuration / 2) {
         diff = this.loopDuration - diff;
       }
@@ -135,28 +182,29 @@ export class RhythmGame {
       }
     }
 
-    // Debounce: Prevent double counting for same target?
-    // Simplified for MVP: Just check if hit.
-
-    // Feedback
-    const trackY = hand === 'left' ? this.trackHeight / 2 : this.trackHeight * 1.5;
+    // Determine visual feedback Y position
+    // Base Y for track
+    const trackCenterY = hand === 'left' ? this.trackHeight / 2 : this.trackHeight * 1.5 + 30;
+    // Offset based on input lane (for visual feedback alignment)
+    const laneOffset = (lane - 1) * 20; // -20, 0, 20
+    const feedbackY = trackCenterY + laneOffset;
 
     if (hit) {
       this.score++;
-      this.showFeedback(this.targetX, trackY, 'Good!', '#4caf50');
-      // Play user feedback sound (different from metronome?)
-      // Ideally user tap sounds immediate.
-      this.audioManager.playDrum(hand === 'left' ? 'D2' : 'A2', '32n');
+      this.showFeedback(this.targetX, feedbackY, 'Good!', '#4caf50');
+
+      // Play Feedback Sound
+      this.audioManager.playRankedNote(hand, lane as any, '32n');
     } else {
-      this.showFeedback(this.targetX, trackY, 'Miss', '#f44336');
+      this.showFeedback(this.targetX, feedbackY, 'Miss', '#f44336');
       this.audioManager.playIncorrect();
     }
     this.attempts++;
 
-    // Update Score UI if possible
+    // Update Score UI
     const scoreEl = document.getElementById('rhythm-score-display');
     if (scoreEl) {
-        scoreEl.textContent = `Score: ${this.score}`;
+      scoreEl.textContent = `Score: ${this.score}`;
     }
   }
 
@@ -196,23 +244,41 @@ export class RhythmGame {
     ctx.strokeStyle = '#444';
     ctx.lineWidth = 2;
 
-    // Left Track (Top)
-    const leftY = this.trackHeight / 2;
+    const leftCenterY = this.trackHeight / 2;
+    const rightCenterY = this.trackHeight * 1.5 + 30; // Shift down a bit more
+
+    // Left Track Lines
     ctx.beginPath();
-    ctx.moveTo(0, leftY);
-    ctx.lineTo(width, leftY);
+    ctx.moveTo(0, leftCenterY);
+    ctx.lineTo(width, leftCenterY);
     ctx.stroke();
     ctx.fillStyle = '#ccc';
     ctx.font = '16px Arial';
-    ctx.fillText('Left Hand (2)', 10, leftY - 20);
+    ctx.fillText('Left Hand (2)', 10, leftCenterY - 40);
 
-    // Right Track (Bottom)
-    const rightY = this.trackHeight * 1.5;
+    // Right Track Lines
     ctx.beginPath();
-    ctx.moveTo(0, rightY);
-    ctx.lineTo(width, rightY);
+    ctx.moveTo(0, rightCenterY);
+    ctx.lineTo(width, rightCenterY);
     ctx.stroke();
-    ctx.fillText('Right Hand (3)', 10, rightY - 20);
+    ctx.fillText('Right Hand (3)', 10, rightCenterY - 40);
+
+    // Draw Lanes hints?
+    if (this.difficulty === 'hard') {
+       ctx.strokeStyle = '#333';
+       ctx.lineWidth = 1;
+       [-20, 0, 20].forEach(offset => {
+          ctx.beginPath();
+          ctx.moveTo(0, leftCenterY + offset);
+          ctx.lineTo(width, leftCenterY + offset);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(0, rightCenterY + offset);
+          ctx.lineTo(width, rightCenterY + offset);
+          ctx.stroke();
+       });
+    }
 
     // Draw Target Line
     ctx.strokeStyle = '#fff';
@@ -222,61 +288,50 @@ export class RhythmGame {
     ctx.lineTo(this.targetX, height);
     ctx.stroke();
 
-    // Draw Notes
-    // We visualize future notes based on Transport progress
-    const progress = Tone.Transport.progress; // 0 to 1
-    // We want to draw notes that are coming up.
-    // X position = TargetX + (NoteTime - CurrentTime) * SpeedPixels
-    // NoteTime is relative to loop.
-
     // Helper to draw notes
-    const drawNotes = (rhythm: number[], y: number, color: string) => {
-        rhythm.forEach(pos => {
-            // We need to render multiple instances of the note to handle the "infinite loop" visual
-            // Current loop, Next loop
+    const drawNotes = (pattern: RhythmNote[], basePathY: number, colors: string[]) => {
+      pattern.forEach((note) => {
+        // Calculate offsets
+        const loopOffsets = [0, 1]; // Current loop and next loop
 
-            const offsets = [0, 1]; // Current loop and next loop
+        // Vertical Offset for Lane
+        // Lane 0 -> -20, Lane 1 -> 0, Lane 2 -> +20
+        const laneOffset = (note.lane - 1) * 20;
+        const y = basePathY + laneOffset;
 
-            offsets.forEach(offset => {
-                const noteTime = pos + offset; // 0..1, 1..2
-                const currentTime = progress;
+        loopOffsets.forEach((offset) => {
+          const noteTime = note.time + offset;
+          const currentTime = Tone.Transport.progress;
 
-                // Diff in units (0..1)
-                let timeDiff = noteTime - currentTime;
+          let timeDiff = noteTime - currentTime;
+          if (timeDiff < -0.2) return;
 
-                // If it's too far passed, ignore
-                if (timeDiff < -0.2) return;
+          const dist = timeDiff * this.loopDuration * this.speed;
+          const x = this.targetX + dist;
 
-                // Calculate X
-                // We map 1 unit (full loop) to a certain pixel distance
-                // Let's say loopDuration * speed = pixels per loop
-                const dist = timeDiff * this.loopDuration * this.speed;
-
-                const x = this.targetX + dist;
-
-                if (x < width + 50 && x > -50) {
-                    ctx.beginPath();
-                    ctx.arc(x, y, this.noteRadius, 0, Math.PI * 2);
-                    ctx.fillStyle = color;
-                    ctx.fill();
-                    ctx.strokeStyle = '#000';
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
-                }
-            });
+          if (x < width + 50 && x > -50) {
+            ctx.beginPath();
+            ctx.arc(x, y, this.noteRadius, 0, Math.PI * 2);
+            ctx.fillStyle = colors[note.lane] || colors[0];
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
         });
+      });
     };
 
-    drawNotes(this.leftRhythm, leftY, '#2196F3'); // Blue
-    drawNotes(this.rightRhythm, rightY, '#FF9800'); // Orange
+    drawNotes(this.leftPattern, leftCenterY, this.leftColors);
+    drawNotes(this.rightPattern, rightCenterY, this.rightColors);
 
     // Draw Feedback
-    this.feedbacks.forEach(fb => {
-        ctx.globalAlpha = fb.life;
-        ctx.fillStyle = fb.color;
-        ctx.font = 'bold 24px Arial';
-        ctx.fillText(fb.text, fb.x, fb.y);
-        ctx.globalAlpha = 1.0;
+    this.feedbacks.forEach((fb) => {
+      ctx.globalAlpha = fb.life;
+      ctx.fillStyle = fb.color;
+      ctx.font = 'bold 24px Arial';
+      ctx.fillText(fb.text, fb.x, fb.y);
+      ctx.globalAlpha = 1.0;
     });
   }
 

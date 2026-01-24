@@ -5,12 +5,19 @@ export class AudioManager {
   private sampler: Tone.Sampler;
   private feedbackSynth: Tone.Synth;
   private rhythmSynth: Tone.MembraneSynth;
+  private rightSynth: Tone.Synth;
   private isLoaded: boolean = false;
 
   constructor(onLoad?: () => void) {
     this.feedbackSynth = new Tone.Synth().toDestination();
     this.rhythmSynth = new Tone.MembraneSynth().toDestination();
     this.rhythmSynth.volume.value = -10;
+
+    this.rightSynth = new Tone.Synth({
+      oscillator: { type: 'triangle' },
+      envelope: { attack: 0.005, decay: 0.1, sustain: 0.1, release: 1 },
+    }).toDestination();
+    this.rightSynth.volume.value = -10;
 
     this.sampler = new Tone.Sampler({
       urls: {
@@ -119,5 +126,19 @@ export class AudioManager {
 
   public playDrum(note: string = 'C2', duration: string = '8n') {
     this.rhythmSynth.triggerAttackRelease(note, duration);
+  }
+
+  public playRankedNote(hand: 'left' | 'right', rank: 0 | 1 | 2, duration: string = '16n') {
+    if (hand === 'left') {
+      // MembraneSynth (Drum-like) - Low
+      const notes = ['C2', 'E2', 'G2'];
+      const note = notes[rank] || notes[0];
+      this.rhythmSynth.triggerAttackRelease(note, duration);
+    } else {
+      // Right Synth (Triangle) - High
+      const notes = ['C4', 'E4', 'G4'];
+      const note = notes[rank] || notes[0];
+      this.rightSynth.triggerAttackRelease(note, duration);
+    }
   }
 }
