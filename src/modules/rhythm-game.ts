@@ -16,7 +16,7 @@ export class RhythmGame {
 
   // Synths for local rhythm sounds
   private leftSynths: Tone.MembraneSynth[] = [];
-  private rightSynths: Tone.Synth[] = [];
+  private rightSynths: Tone.MetalSynth[] = []; // Changed to MetalSynth
 
   // Configuration
   private loopDuration = 2; // seconds
@@ -62,17 +62,42 @@ export class RhythmGame {
     this.leftSynths[1].pitchDecay = 0.1;  // Tom-ish
     this.leftSynths[2].pitchDecay = 0.2;  // Loose tom
 
-    // Right Hand: 3 Distinct High Sounds (Synth/Metal)
-    // Using PolySynth or just distinct Synths
+    // Right Hand: 3 Distinct Cymbal Sounds (MetalSynth)
     this.rightSynths = [
-        new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0 } }).toDestination(),
-        new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0 } }).toDestination(),
-        new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0 } }).toDestination(),
+        // Lane 0: Closed Hi-Hat (Short decay, high pitch)
+        new Tone.MetalSynth({
+            frequency: 200,
+            envelope: { attack: 0.001, decay: 0.1, release: 0.01 },
+            harmonicity: 5.1,
+            modulationIndex: 32,
+            resonance: 4000,
+            octaves: 1.5
+        }).toDestination(),
+
+        // Lane 1: Open Hi-Hat (Longer decay)
+        new Tone.MetalSynth({
+            frequency: 200,
+            envelope: { attack: 0.001, decay: 0.5, release: 0.1 },
+            harmonicity: 5.1,
+            modulationIndex: 32,
+            resonance: 4000,
+            octaves: 1.5
+        }).toDestination(),
+
+        // Lane 2: Ride/Crash (Lower harmonicity, longer ring)
+        new Tone.MetalSynth({
+            frequency: 300,
+            envelope: { attack: 0.001, decay: 1.0, release: 0.2 },
+            harmonicity: 3.1,
+            modulationIndex: 16,
+            resonance: 3000,
+            octaves: 1
+        }).toDestination(),
     ];
 
     // Set Volumes
     this.leftSynths.forEach(s => s.volume.value = -10);
-    this.rightSynths.forEach(s => s.volume.value = -10);
+    this.rightSynths.forEach(s => s.volume.value = -15); // MetalSynth can be loud
 
     // Initial Rhythm Generation
     this.generateRhythm();
@@ -227,9 +252,12 @@ export class RhythmGame {
           const notes = ['C2', 'E2', 'G2'];
           this.leftSynths[lane].triggerAttackRelease(notes[lane], '16n', time);
       } else {
-          // C5, E5, G5
-          const notes = ['C5', 'E5', 'G5'];
-          this.rightSynths[lane].triggerAttackRelease(notes[lane], '16n', time);
+          // MetalSynth uses frequency + duration
+          // We can use different notes/frequencies to vary them slightly too if parameters aren't enough
+          const notes = ['32n', '16n', '4n']; // Durations for Closed, Open, Crash
+          // Trigger the synth. MetalSynth.triggerAttackRelease(note, duration, time, velocity)
+          // We pass the configured frequency as the 'note' argument.
+          this.rightSynths[lane].triggerAttackRelease(this.rightSynths[lane].frequency.value, notes[lane], time);
       }
   }
 
