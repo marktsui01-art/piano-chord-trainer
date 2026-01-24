@@ -66,7 +66,6 @@ export class RhythmGame {
     this.rightSynths = [
         // Lane 0: Closed Hi-Hat (Short decay, high pitch)
         new Tone.MetalSynth({
-            frequency: 200,
             envelope: { attack: 0.001, decay: 0.1, release: 0.01 },
             harmonicity: 5.1,
             modulationIndex: 32,
@@ -76,7 +75,6 @@ export class RhythmGame {
 
         // Lane 1: Open Hi-Hat (Longer decay)
         new Tone.MetalSynth({
-            frequency: 200,
             envelope: { attack: 0.001, decay: 0.5, release: 0.1 },
             harmonicity: 5.1,
             modulationIndex: 32,
@@ -86,7 +84,6 @@ export class RhythmGame {
 
         // Lane 2: Ride/Crash (Lower harmonicity, longer ring)
         new Tone.MetalSynth({
-            frequency: 300,
             envelope: { attack: 0.001, decay: 1.0, release: 0.2 },
             harmonicity: 3.1,
             modulationIndex: 16,
@@ -94,6 +91,11 @@ export class RhythmGame {
             octaves: 1
         }).toDestination(),
     ];
+
+    // Set Frequencies
+    this.rightSynths[0].frequency.value = 200;
+    this.rightSynths[1].frequency.value = 200;
+    this.rightSynths[2].frequency.value = 300;
 
     // Set Volumes
     this.leftSynths.forEach(s => s.volume.value = -10);
